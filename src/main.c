@@ -26,7 +26,7 @@ int func()
     print_variables(&tm);
     print_ast(root, 0);
 
-    printf("Result : %d\n", result);
+    // printf("Result : %d\n", result);
 
     free_ast(root);
     return 0;
@@ -87,6 +87,8 @@ int main(int argc, char **argv)
     ASTNode *root = parse_program(&current_token, &lexer);
 
     print_ast(root, 0);
+    print_variables(&tm);
+
 
 
     generate_code(out, root, &tm);

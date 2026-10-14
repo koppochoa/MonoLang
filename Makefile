@@ -5,7 +5,7 @@ CFLAGS= -Wall -g -Wextra -Iinclude -Iinclude/Core -Iinclude/Core/Types \
 	       -Iinclude/Core/Network -Iinclude/Core/Security \
 	       -Iinclude/Core/Protocol
 
-LDFLAGS= -g
+LDFLAGS= -g -lm
 
 SRCS = $(shell find src/ -name '*.c')
 

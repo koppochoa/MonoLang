@@ -96,11 +96,9 @@ double my_max(double a, double b)
     return b;
 }
 
-FunctionEntry function_table[] = {
-    { "log", builtin_log }, { "sin", builtin_sin },   { "cos", builtin_cos },
-    { "tan", builtin_tan }, { "sqrt", builtin_sqrt }, { "max", builtin_max },
-    { NULL, NULL }
-};
+FunctionEntry function_table[] = { { "log", builtin_log }, { "sin", builtin_sin },   { "cos", builtin_cos },
+                                   { "tan", builtin_tan }, { "sqrt", builtin_sqrt }, { "max", builtin_max },
+                                   { NULL, NULL } };
 
 double evaluate_function(ASTNode *node, Table_Manager *tm)
 {
@@ -224,47 +222,41 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
         break;
     }
     case NODE_NUMBER: {
-        fprintf(out,
-                "   # Pushing Number\n"
-                "   movq $%d, %%rax\n"
-                "   pushq %%rax\n\n",
-                node->value_int);
+        emit_2(out, "movq", IMMEDIATE(node->value_int), REG_RAX);
+
+        emit_1(out, "pushq", REG_RAX);
+
         break;
     }
     case NODE_ADD: {
         generate_code(out, node->op.left, tm);
         generate_code(out, node->op.right, tm);
 
-        fprintf(out,
-                "   # Sum\n"
-                "   popq %%rbx\n"
-                "   popq %%rax\n"
-                "   add  %%rbx, %%rax\n"
-                "   pushq %%rax\n\n");
+        emit_1(out, "popq", REG_RBX);
+        emit_1(out, "popq", REG_RAX);
+        emit_2(out, "add", REG_RBX, REG_RAX);
+        emit_1(out, "pushq", REG_RAX);
+
         break;
     }
     case NODE_SUB: {
         generate_code(out, node->op.left, tm);
         generate_code(out, node->op.right, tm);
 
-        fprintf(out,
-                "   # Sub\n"
-                "   popq %%rbx\n"
-                "   popq %%rax\n"
-                "   sub  %%rbx, %%rax\n"
-                "   pushq %%rax\n\n");
+        emit_1(out, "popq", REG_RBX);
+        emit_1(out, "popq", REG_RAX);
+        emit_2(out, "sub", REG_RBX, REG_RAX);
+        emit_1(out, "pushq", REG_RAX);
     }
     break;
     case NODE_MUL: {
         generate_code(out, node->op.left, tm);
         generate_code(out, node->op.right, tm);
 
-        fprintf(out,
-                "   # Sub\n"
-                "   popq %%rbx\n"
-                "   popq %%rax\n"
-                "   imulq  %%rbx, %%rax\n"
-                "   pushq %%rax\n\n");
+        emit_1(out, "popq", REG_RBX);
+        emit_1(out, "popq", REG_RAX);
+        emit_2(out, "imulq", REG_RBX, REG_RAX);
+        emit_1(out, "pushq", REG_RAX);
     }
     break;
 
@@ -272,12 +264,10 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
         generate_code(out, node->op.left, tm);
         generate_code(out, node->op.right, tm);
 
-        fprintf(out,
-                "   # Sub\n"
-                "   popq %%rbx\n"
-                "   popq %%rax\n"
-                "   idivq  %%rbx, %%rax\n"
-                "   pushq %%rax\n\n");
+        emit_1(out, "popq", REG_RBX);
+        emit_1(out, "popq", REG_RAX);
+        emit_2(out, "idivq", REG_RBX, REG_RAX);
+        emit_1(out, "pushq", REG_RAX);
     }
     break;
 
@@ -285,28 +275,17 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
         break;
 
     case NODE_UNARY_PLUS: {
-        // fprintf(out,
-        //         "   # Pushing Number\n"
-        //         "   movq $%d, %%rax\n"
-        //         "   pushq %%rax\n\n",
-        //         node->unary.operand);
         generate_code(out, node->unary.operand, tm);
     }
     break;
 
     case NODE_UNARY_MINUS: {
-        // fprintf(out,
-        //         "   # Pushing Number\n"
-        //         "   movq $%d, %%rax\n"
-        //         "   negq %%rax\n"
-        //         "   pushq %%rax\n\n",
-        //         node->unary);
         generate_code(out, node->unary.operand, tm);
-        fprintf(out,
-                "   # Unary minus\n"
-                "   popq %%rax\n"
-                "   negq %%rax\n"
-                "   pushq %%rax\n\n");
+
+        emit_1(out, "popq", REG_RAX);
+        emit_1(out, "negq", REG_RAX);
+        emit_1(out, "pushq", REG_RAX);
+
         break;
     }
 

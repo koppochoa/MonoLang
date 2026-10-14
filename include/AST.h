@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "Variables.h"
+#include "emit.h"
 
 typedef enum
 {

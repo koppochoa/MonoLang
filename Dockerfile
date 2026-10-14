@@ -12,6 +12,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gdb \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /work
+WORKDIR /app
 
 CMD ["bash"]
