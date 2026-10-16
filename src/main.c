@@ -5,6 +5,7 @@
 #include "Variables.h"
 #include "lexer.h"
 #include "parser.h"
+#include "std.h"
 
 int func()
 {
@@ -13,8 +14,8 @@ int func()
 
     Table_Manager tm;
     init_table_manager(&tm);
-    set_variable(&tm, "pi", M_PI);
-    set_variable(&tm, "e", M_E);
+    // set_variable(&tm, "pi", M_PI);
+    // set_variable(&tm, "e", M_E);
 
     Lexer lexer;
     set_lexer(&lexer, input);
@@ -73,30 +74,27 @@ int main(int argc, char **argv)
     fprintf(out,
             ".section .text\n"
             ".globl _start\n\n"
-            "_start:\n");
+            "_start:\n"
+            "   call main\n"
 
-    Table_Manager tm;
-    init_table_manager(&tm);
-    set_variable(&tm, "pi", M_PI);
-    set_variable(&tm, "e", M_E);
+    );
+
+    _sysexit(out);
 
     Lexer lexer;
     set_lexer(&lexer, buffer);
 
     Token current_token = get_next_token(&lexer);
+
+    debug_lexer(&lexer);
+
     ASTNode *root = parse_program(&current_token, &lexer);
 
+    generate_code(out, root, NULL);
+
+
     print_ast(root, 0);
-    print_variables(&tm);
-
-
-
-    generate_code(out, root, &tm);
-
-    fprintf(out,
-            "   movq $60, %%rax \n"
-            "   popq %%rdi\n"
-            "   syscall\n");
+    // print_variables(&tm);
 
     fclose(in);
 

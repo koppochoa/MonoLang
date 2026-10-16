@@ -4,8 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void print_error_at_position(const char *input, int position,
-                             const char *message)
+void print_error_at_position(const char *input, int position, const char *message)
 {
     fprintf(stderr, "%s\n", input);
 
@@ -54,16 +53,33 @@ void print_token(Token token)
     case POWER:
         printf("POWER (^)\n");
         break;
+    case SEMICOLON:
+        printf("SEMICOLON (;)\n");
+        break;
     case LPARENTHESIS:
         printf("LPARENTHESIS: (\n");
         break;
     case RPARENTHESIS:
         printf("RPARENTHESIS: )\n");
         break;
+    case FUNCTION_DECL:
+        printf("FUNCTION_DECL\n");
+        break;
+    case LBRACE:
+        printf("LBRACE\n");
+        break;
+    case RBRACE:
+        printf("RBRACE\n");
+        break;
     case TOKEN_EOF:
         printf("EOF\n");
         break;
+    case RETURN_STATMENT:
+        printf("RETURN_STATMENT\n");
+        break;
+
     case INVALID:
+        break;
     default:
         printf("INVALID TOKEN\n");
         break;
@@ -102,6 +118,9 @@ Token lex_operators(Lexer *lexer)
 
     switch (lexer->data[lexer->position])
     {
+    case '\0':
+        token.tokentype = TOKEN_EOF;
+        return token;
     case '+':
         token.tokentype = PLUS;
         lexer->position++;
@@ -142,10 +161,17 @@ Token lex_operators(Lexer *lexer)
         token.tokentype = COMMA;
         lexer->position++;
         return token;
+    case '{':
+        token.tokentype = LBRACE;
+        lexer->position++;
+        return token;
+    case '}':
+        token.tokentype = RBRACE;
+        lexer->position++;
+        return token;
     default:
         lexer->position++;
-        print_error_at_position(lexer->data, lexer->position,
-                                "Caractère non reconnu");
+        print_error_at_position(lexer->data, lexer->position, "Caractère non reconnu");
         exit(1);
     }
 }
@@ -165,6 +191,20 @@ Token lex_identifier(Lexer *lexer)
     strncpy(ident, lexer->data + start, length);
     ident[length] = '\0';
 
+    if (strcmp(ident, "fn") == 0)
+    {
+        token.tokentype = FUNCTION_DECL;
+        // potentiel free
+        return token;
+    }
+
+    if (strcmp(ident, "return") == 0)
+    {
+        token.tokentype = RETURN_STATMENT;
+        // potentiel free
+        return token;
+    }
+
     token.tokentype = IDENTIFIER;
     token.identifier = ident;
     return token;
@@ -178,8 +218,7 @@ Token lex_number(Lexer *lexer)
     int i = 0;
     int point_count = 0;
 
-    while (is_digit(lexer->data[lexer->position])
-           || lexer->data[lexer->position] == '.')
+    while (is_digit(lexer->data[lexer->position]) || lexer->data[lexer->position] == '.')
     {
         if (lexer->data[lexer->position] == '.')
         {
@@ -235,4 +274,21 @@ Token get_next_token(Lexer *lexer)
         return lex_number(lexer);
 
     return lex_operators(lexer);
+}
+
+void debug_lexer(Lexer *lexer)
+{
+    Lexer dl = { .data = lexer->data, .position = 0 };
+    Token tk = get_next_token(&dl);
+
+    while (tk.tokentype != TOKEN_EOF)
+    {
+        print_token(tk);
+        tk = get_next_token(&dl);
+    }
+
+    if (tk.tokentype == TOKEN_EOF)
+    {
+        print_token(tk);
+    }
 }

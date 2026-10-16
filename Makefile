@@ -1,11 +1,11 @@
 CC = gcc
 
-CFLAGS= -Wall -g -Wextra -Iinclude -Iinclude/Core -Iinclude/Core/Types \
+CFLAGS= -pedantic -Wvla -Wall -g -Wextra -Iinclude -Iinclude/Core -Iinclude/Core/Types \
 	       -Iinclude/Core/Utils \
 	       -Iinclude/Core/Network -Iinclude/Core/Security \
 	       -Iinclude/Core/Protocol
 
-LDFLAGS= -g -lm
+LDFLAGS=-lm
 
 SRCS = $(shell find src/ -name '*.c')
 

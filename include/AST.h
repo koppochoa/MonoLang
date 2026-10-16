@@ -4,6 +4,8 @@
 
 #include "Variables.h"
 #include "emit.h"
+#include "lexer.h"
+#include "std.h"
 
 typedef enum
 {
@@ -19,7 +21,12 @@ typedef enum
     NODE_IDENTIFIER,
     NODE_ASSIGN,
     NODE_PROGRAM,
+
+    NODE_FUNCTION_DECL,
+    NODE_FUNCTION_NAME,
     NODE_FUNCTION_CALL,
+    NODE_VARIABLE,
+    NODE_VARIABLE_CALL,
 
     NODE_COMPARE_EQ,
     NODE_GREATER_THAN,
@@ -61,24 +68,43 @@ typedef struct ASTNode
         double value_float;
         char *identifier;
 
-        struct
-        {
-            char *function_name;
-            struct ASTList *args;
-        } function;
-        struct
+        struct op
         {
             struct ASTNode *left;
             struct ASTNode *right;
         } op;
-        struct
+
+        struct var
+        {
+            struct op op;
+            int offset;
+        } var;
+
+        struct varcall
+        {
+            int offset;
+        } varcall;
+
+        struct retst
+        {
+            struct ASTNode *expr;
+        } retst;
+
+        struct unary
         {
             struct ASTNode *operand;
         } unary;
-        struct
+        struct program
         {
             struct ASTList *list;
         } program;
+        struct function
+        {
+            struct ASTNode *name;
+            struct ASTList *body;
+            int args_size;
+            Table_Manager *tm;
+        } function;
     };
 
 } ASTNode;

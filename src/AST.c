@@ -100,43 +100,43 @@ FunctionEntry function_table[] = { { "log", builtin_log }, { "sin", builtin_sin 
                                    { "tan", builtin_tan }, { "sqrt", builtin_sqrt }, { "max", builtin_max },
                                    { NULL, NULL } };
 
-double evaluate_function(ASTNode *node, Table_Manager *tm)
-{
-    // Compter le nombre d'arguments
-    int count = 0;
-    ASTList *current = node->function.args;
-    while (current)
-    {
-        count++;
-        current = current->next;
-    }
+// double evaluate_function(ASTNode *node, Table_Manager *tm)
+// {
+//     // Compter le nombre d'arguments
+//     int count = 0;
+//     ASTList *current = node->function.args;
+//     while (current)
+//     {
+//         count++;
+//         current = current->next;
+//     }
 
-    // Allouer un tableau de doubles
-    double *args = malloc(sizeof(double) * count);
+//     // Allouer un tableau de doubles
+//     double *args = malloc(sizeof(double) * count);
 
-    // Évaluer les arguments
-    current = node->function.args;
-    for (int i = 0; i < count; ++i)
-    {
-        args[i] = evaluate(current->statement, tm);
-        current = current->next;
-    }
+//     // Évaluer les arguments
+//     current = node->function.args;
+//     for (int i = 0; i < count; ++i)
+//     {
+//         args[i] = evaluate(current->statement, tm);
+//         current = current->next;
+//     }
 
-    // Chercher la fonction dans le tableau
-    for (int i = 0; function_table[i].name != NULL; ++i)
-    {
-        if (strcmp(node->function.function_name, function_table[i].name) == 0)
-        {
-            double result = function_table[i].func(args, count);
-            free(args);
-            return result;
-        }
-    }
+//     // Chercher la fonction dans le tableau
+//     for (int i = 0; function_table[i].name != NULL; ++i)
+//     {
+//         if (strcmp(node->function.function_name, function_table[i].name) == 0)
+//         {
+//             double result = function_table[i].func(args, count);
+//             free(args);
+//             return result;
+//         }
+//     }
 
-    printf("Erreur : fonction inconnue '%s'\n", node->function.function_name);
-    free(args);
-    exit(1);
-}
+//     printf("Erreur : fonction inconnue '%s'\n", node->function.function_name);
+//     free(args);
+//     exit(1);
+// }
 
 double evaluate(ASTNode *node, Table_Manager *tm)
 {
@@ -155,12 +155,8 @@ double evaluate(ASTNode *node, Table_Manager *tm)
     }
 
     case NODE_FUNCTION_CALL: {
-        // if(strcmp(node->function.function_name, "log") == 0)
-        // {
-        //     return log(evaluate(node->function.args, tm));
-        // }
-
-        return evaluate_function(node, tm);
+        // return evaluate_function(node, tm);
+        return 0;
     }
 
     case NODE_FLOAT:
@@ -183,11 +179,12 @@ double evaluate(ASTNode *node, Table_Manager *tm)
         return -evaluate(node->unary.operand, tm);
     case NODE_ASSIGN: {
         double val = evaluate(node->op.right, tm);
-        set_variable(tm, node->op.left->identifier, val);
+        // set_variable(tm, node->op.left->identifier.ident, val);
         return val;
     }
     case NODE_IDENTIFIER:
-        return get_variable(tm, node->identifier);
+        // return get_variable(tm, node->identifier.ident);
+        return 0;
     default:
         break;
     }
@@ -210,11 +207,25 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
         break;
     }
 
-    case NODE_FUNCTION_CALL: {
-        // if(strcmp(node->function.function_name, "log") == 0)
-        // {
-        //     return log(evaluate(node->function.args, tm));
-        // }
+    case NODE_FUNCTION_DECL: {
+        // Ecrire Label
+        // (future) recuperer args
+        // write...
+
+        emit_label(out, node->function.name->identifier);
+
+        emit_1(out, "pushq", REG_RBP);
+        emit_2(out, "movq", REG_RSP, REG_RBP);
+        emit_2(out, "subq", IMMEDIATE(node->function.tm->offset), REG_RSP);
+
+        ASTList *current = node->function.body;
+        while (current)
+        {
+            generate_code(out, current->statement, node->function.tm);
+
+            current = current->next;
+        }
+
         break;
     }
 
@@ -222,9 +233,9 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
         break;
     }
     case NODE_NUMBER: {
-        emit_2(out, "movq", IMMEDIATE(node->value_int), REG_RAX);
+        emit_1(out, "pushq", IMMEDIATE(node->value_int));
 
-        emit_1(out, "pushq", REG_RAX);
+        // emit_1(out, "pushq", REG_RAX);
 
         break;
     }
@@ -264,9 +275,10 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
         generate_code(out, node->op.left, tm);
         generate_code(out, node->op.right, tm);
 
-        emit_1(out, "popq", REG_RBX);
-        emit_1(out, "popq", REG_RAX);
-        emit_2(out, "idivq", REG_RBX, REG_RAX);
+        emit_1(out, "popq", REG_RBX); // Diviseur
+        emit_1(out, "popq", REG_RAX); // Dividende
+        emit_0(out, "cqo"); // À ajouter à ton API
+        emit_1(out, "idivq", REG_RBX);
         emit_1(out, "pushq", REG_RAX);
     }
     break;
@@ -289,11 +301,62 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
         break;
     }
 
-    case NODE_ASSIGN: {
+    case NODE_VARIABLE: {
+        if (!tm)
+        {
+            printf("No Table Manager\n");
+            break;
+        }
+
+        // Check si la variable existe
+        Variable *var = lookupvariable(tm, node->var.op.left->identifier);
+        if (var == NULL)
+        {
+            fprintf(stderr, "Variable inconnue\n");
+            return;
+        }
+        if (var->created == false)
+        {
+            // printf("var : [%s] doesnt exists for now, creating variable...\n", node->var.op.left->identifier);
+
+            generate_code(out, node->var.op.right, tm); // pushed into stack
+
+            char buff[32];
+            snprintf(buff, sizeof(buff), "-%d(%%rbp)", var->offset);
+
+            const struct Operand dest = { .type = OPERAND_REGISTER, .value.reg = buff };
+
+            fprintf(out, "#VAR DEF\n");
+            emit_1(out, "popq", dest);
+            var->created = true;
+
+            break;
+        }
+
         break;
     }
-    case NODE_IDENTIFIER:
+    case NODE_VARIABLE_CALL: {
+        // printf("using variable offset: [%d]\n", node->varcall.offset);
+
+        char buff[32];
+        snprintf(buff, sizeof(buff), "-%d(%%rbp)", node->varcall.offset);
+
+        const struct Operand src = { .type = OPERAND_REGISTER, .value.reg = buff };
+        fprintf(out, "#VAR USE\n");
+
+        emit_1(out, "pushq", src);
+
         break;
+    }
+    case NODE_RETURN_STATMENT: {
+        generate_code(out, node->retst.expr, tm);
+
+        emit_1(out, "popq", REG_RAX);
+        emit_0(out, "leave");
+        emit_0(out, "ret");
+
+        break;
+    }
 
     default:
         break;
@@ -334,7 +397,7 @@ void print_ast(ASTNode *node, int indent)
         break;
 
     case NODE_IDENTIFIER:
-        printf("IDENTIFIER: %s\n", node->identifier);
+        printf("IDENTIFIER\n");
         break;
 
     case NODE_ADD:
@@ -382,11 +445,19 @@ void print_ast(ASTNode *node, int indent)
         print_ast(node->op.left, indent + 1); // variable
         print_ast(node->op.right, indent + 1); // expression
         break;
+    case NODE_VARIABLE:
+        printf("VARIABLE\n");
+        print_ast(node->var.op.left, indent + 1); // variable
+        print_ast(node->var.op.right, indent + 1); // expression
+        break;
+    case NODE_VARIABLE_CALL:
+        printf("NODE_VARIABLE_CALL\n");
+        break;
 
     case NODE_FUNCTION_CALL:
-        printf("FUNCTION_CALL: %s\n", node->function.function_name);
+        printf("FUNCTION_CALL\n");
         {
-            ASTList *current = node->function.args;
+            ASTList *current = node->function.body;
             while (current)
             {
                 print_ast(current->statement, indent + 1);
@@ -394,6 +465,20 @@ void print_ast(ASTNode *node, int indent)
             }
         }
         break;
+
+    case NODE_FUNCTION_DECL: {
+        printf("FUNCTION DECL\n");
+
+        print_ast(node->function.name, indent + 1);
+
+        ASTList *current = node->function.body;
+        while (current)
+        {
+            print_ast(current->statement, indent + 1);
+            current = current->next;
+        }
+        break;
+    }
 
     case NODE_PROGRAM: {
         printf("PROGRAM\n");
@@ -403,6 +488,11 @@ void print_ast(ASTNode *node, int indent)
             print_ast(current->statement, indent + 1);
             current = current->next;
         }
+        break;
+    }
+    case NODE_RETURN_STATMENT: 
+    {
+        printf("RETURN\n");
         break;
     }
 

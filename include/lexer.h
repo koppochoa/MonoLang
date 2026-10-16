@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-typedef enum 
+typedef enum
 {
     NUMBER,
     PLUS,
@@ -20,7 +20,13 @@ typedef enum
     ASSIGN,
     SEMICOLON,
     COMMA,
-    
+
+    FUNCTION_DECL,
+    FUNCTION_NAME,
+
+    LBRACE,
+    RBRACE,
+
     COMPARE_EQ,
     GREATER_THAN,
     GREATER_EQUAL,
@@ -42,28 +48,36 @@ typedef enum
     RETURN_STATMENT,
 
     MAIN,
-    
 
-}TokenType;
+} TokenType;
+
+typedef struct Function
+{
+    char *name;
+} Function;
 
 typedef struct
 {
-    TokenType   tokentype;
-    union{
-        int     value_int;
-        double  value_float;
-        char*   identifier;
+    TokenType tokentype;
+    union
+    {
+        int value_int;
+        double value_float;
+        char *identifier;
+        struct Function function;
     };
-}Token;
+} Token;
 
-typedef struct 
+typedef struct
 {
-    int     position;
-    char*   data;
-}Lexer;
+    int position;
+    char *data;
+} Lexer;
 
 void print_token(Token token);
-void set_lexer(Lexer* lexer, char* input);
+void set_lexer(Lexer *lexer, char *input);
+
+void debug_lexer(Lexer* lexer);
 
 bool is_digit(const char input);
-Token get_next_token(Lexer* lexer);
+Token get_next_token(Lexer *lexer);

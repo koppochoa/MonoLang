@@ -24,8 +24,7 @@ void emit_1(FILE *out, const char *op, const struct Operand op1)
     emit_operand(out, op1);
     fprintf(out, "\n");
 }
-void emit_2(FILE *out, const char *op, const struct Operand op1,
-            const struct Operand op2)
+void emit_2(FILE *out, const char *op, const struct Operand op1, const struct Operand op2)
 {
     fprintf(out, "   %s ", op);
     emit_operand(out, op1);
@@ -33,4 +32,11 @@ void emit_2(FILE *out, const char *op, const struct Operand op1,
 
     emit_operand(out, op2);
     fprintf(out, "\n");
+}
+
+void emit_label(FILE *out, const char *label)
+{
+    fprintf(out, ".globl %s\n", label);
+    fprintf(out, ".type %s, @function\n", label);
+    fprintf(out, "%s:\n", label);
 }
