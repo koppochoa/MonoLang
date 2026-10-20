@@ -40,8 +40,21 @@
                   "content": "assign data",
                   "id": 1792418529740,
                   "level": "default",
+                  "done": true,
+                  "start": 1792418529740,
+                  "focus": false,
+                  "end": 1792527358749
+                }
+              },
+              {
+                "key": 1792527379588,
+                "children": [],
+                "todo": {
+                  "content": "opti?",
+                  "id": 1792527379588,
+                  "level": "secondary",
                   "done": false,
-                  "start": 1792418529740
+                  "start": 1792527379588
                 }
               }
             ],
@@ -49,19 +62,10 @@
               "content": "arguments",
               "id": 1792174094528,
               "level": "default",
-              "done": false,
-              "start": 1792174094528
-            }
-          },
-          {
-            "key": 1792174099803,
-            "children": [],
-            "todo": {
-              "content": "range",
-              "id": 1792174099803,
-              "level": "default",
-              "done": false,
-              "start": 1792174099803
+              "done": true,
+              "start": 1792174094528,
+              "focus": false,
+              "end": 1792527387192
             }
           }
         ],
@@ -97,7 +101,9 @@
               "id": 1792174483525,
               "level": "default",
               "done": false,
-              "start": 1792174483525
+              "start": 1792174483525,
+              "focus": false,
+              "end": 1792527345141
             }
           }
         ],
@@ -137,7 +143,8 @@
       1792174076357,
       1792174476378,
       1792174539632,
-      1792174094528
+      1792174094528,
+      1792174483525
     ],
     "add_mode": "bottom",
     "virtual": false,
@@ -148,6 +155,6 @@
     "showEndTime": false,
     "simpleMode": false,
     "lang": "en",
-    "version": "1792418540746"
+    "version": "1792527392584"
   }
 }

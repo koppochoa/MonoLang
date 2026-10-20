@@ -217,6 +217,20 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
         emit_2(out, "movq", REG(RSP), REG(RBP));
         emit_2(out, "subq", IMMEDIATE(node->function.tm->offset), REG(RSP));
 
+        int varcount = 0;
+        int varoffset = 16;
+
+        fprintf(out, "#START ARGUMENTS INITIALIZATION\n");
+
+        ASTList *args_current = node->function.args;
+        while (args_current)
+        {
+            generate_args(out, args_current->statement, node->function.used,
+                          &varcount, &varoffset, node->function.tm);
+            args_current = args_current->next;
+        }
+        fprintf(out, "#END ARGUMENTS INITIALIZATION\n");
+
         ASTList *current = node->function.body;
         while (current)
         {
@@ -273,16 +287,12 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
             // generate_code(out, node->var.op.right, tm);
             Register reg = generate_expr(out, node->var.op.right);
 
-            char buff[32];
-            snprintf(buff, sizeof(buff), "-%d(%%rbp)", var->offset);
-
             Register dreg = { .offset = var->offset, .reg = RBP };
 
             const struct Operand dest = { .type = OPERAND_REGISTER,
                                           .value.reg = dreg };
 
             fprintf(out, "#VAR DEF\n");
-            // emit_1(out, "popq", dest);
 
             emit_2(out, "movq", REG(reg), dest);
 
@@ -381,12 +391,6 @@ Register generate_expr(FILE *out, ASTNode *node)
 
     case NODE_VARIABLE_CALL: {
 
-        // opti : Register should be able to be an offseted register so I can
-        // return directly the register containing the direct value
-
-        char buff[32];
-        snprintf(buff, sizeof(buff), "-%d(%%rbp)", node->varcall.offset);
-
         Register reg = { .offset = node->varcall.offset, .reg = RBP };
 
         const struct Operand src = { .type = OPERAND_REGISTER,
@@ -403,6 +407,36 @@ Register generate_expr(FILE *out, ASTNode *node)
     default:
         break;
     }
+}
+
+void generate_args(FILE *out, ASTNode *node, bool *used, int *varcount,
+                   int *varoffset, Table_Manager *tm)
+{
+    if (*varcount >= ARGUMENTS_REG_COUNT)
+    {
+        Register varin = { .offset = *varoffset, .reg = RBP };
+        Register varout = { .offset = node->var.offset, .reg = RBP };
+
+        Register tmpr = find_free_reg();
+
+        emit_2(out, "movq", REG(varin), REG(tmpr));
+        emit_2(out, "movq", REG(tmpr), REG(varout));
+
+        free_reg(tmpr);
+
+        (*varoffset) += 8;
+        return;
+    }
+
+    Register reg = find_free_reg_from(used);
+
+    Register var = { .offset = node->var.offset, .reg = RBP };
+
+    const struct Operand src = { .type = OPERAND_REGISTER, .value.reg = reg };
+    emit_2(out, "movq", REG(reg.reg), REG(var));
+
+    use_reg_from(used, *varcount);
+    (*varcount)++;
 }
 
 void free_ast(ASTNode *node)

@@ -4,7 +4,11 @@ void emit_register(FILE *out, const Register reg)
 {
     if (reg.offset != 0)
     {
-        fprintf(out, "-%d(", reg.offset);
+        if(reg.offset < 0)
+        {
+            fprintf(out, "-%d(", -reg.offset);
+        }else
+            fprintf(out, "%d(", reg.offset);
     }
 
     switch (reg.reg)
@@ -27,8 +31,17 @@ void emit_register(FILE *out, const Register reg)
     case RSP:
         fprintf(out, "%%rsp");
         break;
-     case RDI:
+    case RDI:
         fprintf(out, "%%rdi");
+        break;
+    case RSI:
+        fprintf(out, "%%rsi");
+        break;
+    case R8:
+        fprintf(out, "%%r8");
+        break;
+    case R9:
+        fprintf(out, "%%r9");
         break;
     default:
         break;

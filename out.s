@@ -11,7 +11,17 @@ _start:
 main:
    pushq %rbp
    movq %rsp, %rbp
-   subq $40, %rsp
+   subq $80, %rsp
+#START ARGUMENTS INITIALIZATION
+   movq %rdi, -8(%rbp)
+   movq %rsi, -16(%rbp)
+   movq %rdx, -24(%rbp)
+   movq %rcx, -32(%rbp)
+   movq %r8, -40(%rbp)
+   movq %r9, -48(%rbp)
+   movq 16(%rbp), %rax
+   movq %rax, -56(%rbp)
+#END ARGUMENTS INITIALIZATION
    movq $2, %rax
    movq $3, %rbx
    addq %rbx, %rax
@@ -20,15 +30,15 @@ main:
    addq %rcx, %rbx
    imulq %rax, %rbx
 #VAR DEF
-   movq %rbx, -24(%rbp)
+   movq %rbx, -64(%rbp)
    movq $1, %rax
 #VAR USE
-   movq -24(%rbp), %rbx
+   movq -64(%rbp), %rbx
    addq %rbx, %rax
 #VAR DEF
-   movq %rax, -32(%rbp)
+   movq %rax, -72(%rbp)
 #VAR USE
-   movq -32(%rbp), %rax
+   movq -72(%rbp), %rax
    movq %rax, %rax
    leave
    ret

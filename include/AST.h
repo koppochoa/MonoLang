@@ -106,9 +106,11 @@ typedef struct ASTNode
         {
             struct ASTNode *name;
             struct ASTList *body;
+            struct ASTList *args;
             int args_size;
             Table_Manager *tm;
-        } function;
+            bool used[ARGUMENTS_REG_COUNT];
+    } function;
     };
 
 } ASTNode;
@@ -118,5 +120,6 @@ ASTNode *create_op_node(NodeType type, ASTNode *left, ASTNode *right);
 double evaluate(ASTNode *node, Table_Manager *tm);
 void generate_code(FILE *out, ASTNode *node, Table_Manager *tm);
 Register generate_expr(FILE* out, ASTNode* node);
+void generate_args(FILE* out, ASTNode* node, bool* used,int* varcount, int* varoffset, Table_Manager* tm);
 void free_ast(ASTNode *node);
 void print_ast(ASTNode *node, int indent);

@@ -60,7 +60,7 @@ ASTNode *parse_factor(Token *current_token, Lexer *lexer, Table_Manager *tm)
 
             ASTNode *assign = malloc(sizeof(ASTNode));
             assign->type = NODE_VARIABLE;
-            assign->var.offset = tm->offset;
+            assign->var.offset = -tm->offset;
 
             assign->var.op.left = malloc(sizeof(ASTNode));
             assign->var.op.left->type = NODE_IDENTIFIER;
@@ -68,7 +68,7 @@ ASTNode *parse_factor(Token *current_token, Lexer *lexer, Table_Manager *tm)
 
             assign->var.op.right = expr;
 
-            set_variable(tm, assign->op.left->identifier, tm->offset);
+            set_variable(tm, assign->op.left->identifier, -tm->offset);
 
             return assign;
         }
@@ -225,8 +225,13 @@ ASTNode *parse_function(Token *current_token, Lexer *lexer)
         func->function.tm = malloc(sizeof(Table_Manager));
         func->function.tm->offset = sizeof(long);
         func->function.tm->variable_count = 0;
+        for (int i = 0; i < ARGUMENTS_REG_COUNT; i++)
+        {
+            func->function.used[i] = false;
+        }
 
         ASTList **current = &(func->function.body);
+        ASTList **args_current = &(func->function.args);
 
         // on sattend a avoir les tokens dans le bon ordre
         *current_token = get_next_token(lexer);
@@ -247,7 +252,7 @@ ASTNode *parse_function(Token *current_token, Lexer *lexer)
             {
                 ASTNode *assign = malloc(sizeof(ASTNode));
                 assign->type = NODE_VARIABLE;
-                assign->var.offset = func->function.tm->offset;
+                assign->var.offset = -func->function.tm->offset;
 
                 assign->var.op.left = malloc(sizeof(ASTNode));
                 assign->var.op.left->type = NODE_IDENTIFIER;
@@ -255,13 +260,21 @@ ASTNode *parse_function(Token *current_token, Lexer *lexer)
 
                 assign->var.op.right = NULL;
 
+                ASTList *new = malloc(sizeof(ASTList));
+                new->statement = assign;
+                new->next = NULL;
+
+                *args_current = new;
+                args_current = &(new->next);
+
                 set_variable(func->function.tm, assign->op.left->identifier,
                              func->function.tm->offset);
 
                 func->function.tm->offset += sizeof(long);
-
             }
         }
+
+        print_variables(func->function.tm);
 
         if (current_token->tokentype != LBRACE)
         {
