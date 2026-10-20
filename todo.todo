@@ -1,0 +1,153 @@
+{
+  "todotree": {
+    "tree": [
+      {
+        "key": 1792174076357,
+        "children": [
+          {
+            "key": 1792174088177,
+            "children": [],
+            "todo": {
+              "content": "return statment",
+              "id": 1792174088177,
+              "level": "default",
+              "done": true,
+              "start": 1792174088177,
+              "focus": false,
+              "end": 1792174093778
+            }
+          },
+          {
+            "key": 1792174094528,
+            "children": [
+              {
+                "key": 1792418522394,
+                "children": [],
+                "todo": {
+                  "content": "fetch from func",
+                  "id": 1792418522394,
+                  "level": "default",
+                  "done": true,
+                  "start": 1792418522395,
+                  "focus": false,
+                  "end": 1792418540715
+                }
+              },
+              {
+                "key": 1792418529740,
+                "children": [],
+                "todo": {
+                  "content": "assign data",
+                  "id": 1792418529740,
+                  "level": "default",
+                  "done": false,
+                  "start": 1792418529740
+                }
+              }
+            ],
+            "todo": {
+              "content": "arguments",
+              "id": 1792174094528,
+              "level": "default",
+              "done": false,
+              "start": 1792174094528
+            }
+          },
+          {
+            "key": 1792174099803,
+            "children": [],
+            "todo": {
+              "content": "range",
+              "id": 1792174099803,
+              "level": "default",
+              "done": false,
+              "start": 1792174099803
+            }
+          }
+        ],
+        "todo": {
+          "content": "Functions",
+          "id": 1792174076357,
+          "level": "default",
+          "done": false,
+          "start": 1792174076357,
+          "focus": false,
+          "end": 1792174129231
+        }
+      },
+      {
+        "key": 1792174476378,
+        "children": [
+          {
+            "key": 1792174480416,
+            "children": [],
+            "todo": {
+              "content": "Type",
+              "id": 1792174480416,
+              "level": "default",
+              "done": false,
+              "start": 1792174480416
+            }
+          },
+          {
+            "key": 1792174483525,
+            "children": [],
+            "todo": {
+              "content": "value",
+              "id": 1792174483525,
+              "level": "default",
+              "done": false,
+              "start": 1792174483525
+            }
+          }
+        ],
+        "todo": {
+          "content": "Variables",
+          "id": 1792174476378,
+          "level": "default",
+          "done": false,
+          "start": 1792174476378
+        }
+      },
+      {
+        "key": 1792174539632,
+        "children": [
+          {
+            "key": 1792174545975,
+            "children": [],
+            "todo": {
+              "content": "simplify functions",
+              "id": 1792174545975,
+              "level": "default",
+              "done": false,
+              "start": 1792174545975
+            }
+          }
+        ],
+        "todo": {
+          "content": "AST",
+          "id": 1792174539632,
+          "level": "default",
+          "done": false,
+          "start": 1792174539632
+        }
+      }
+    ],
+    "expandKeys": [
+      1792174076357,
+      1792174476378,
+      1792174539632,
+      1792174094528
+    ],
+    "add_mode": "bottom",
+    "virtual": false,
+    "showLine": false,
+    "playFontSize": 24,
+    "title": "todo",
+    "autoSort": false,
+    "showEndTime": false,
+    "simpleMode": false,
+    "lang": "en",
+    "version": "1792418540746"
+  }
+}

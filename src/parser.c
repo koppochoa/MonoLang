@@ -78,7 +78,8 @@ ASTNode *parse_factor(Token *current_token, Lexer *lexer, Table_Manager *tm)
             struct ASTNode *func_call = malloc(sizeof(struct ASTNode));
             func_call->type = NODE_FUNCTION_CALL;
             func_call->function.name->identifier = name;
-            // func_call->function.args = parse_argument_list(current_token, lexer);
+            // func_call->function.args = parse_argument_list(current_token,
+            // lexer);
 
             if (current_token->tokentype != RPARENTHESIS)
             {
@@ -127,7 +128,8 @@ ASTNode *parse_term(Token *current_token, Lexer *lexer, Table_Manager *tm)
 {
     ASTNode *left = parse_power(current_token, lexer, tm);
 
-    while (current_token->tokentype == MULTIPLY || current_token->tokentype == DIVIDE)
+    while (current_token->tokentype == MULTIPLY
+           || current_token->tokentype == DIVIDE)
     {
         TokenType op = current_token->tokentype;
         *current_token = get_next_token(lexer);
@@ -149,7 +151,8 @@ ASTNode *parse_expr(Token *current_token, Lexer *lexer, Table_Manager *tm)
 {
     ASTNode *left = parse_term(current_token, lexer, tm);
 
-    while (current_token->tokentype == PLUS || current_token->tokentype == MINUS)
+    while (current_token->tokentype == PLUS
+           || current_token->tokentype == MINUS)
     {
         TokenType op = current_token->tokentype;
         *current_token = get_next_token(lexer);
@@ -174,7 +177,8 @@ ASTNode *parse_power(Token *current_token, Lexer *lexer, Table_Manager *tm)
     while (current_token->tokentype == POWER)
     {
         *current_token = get_next_token(lexer);
-        ASTNode *right = parse_power(current_token, lexer, tm); // récursif pour associativité à droite
+        ASTNode *right = parse_power(
+            current_token, lexer, tm); // récursif pour associativité à droite
 
         ASTNode *node = malloc(sizeof(ASTNode));
         node->type = NODE_POW;
@@ -187,7 +191,8 @@ ASTNode *parse_power(Token *current_token, Lexer *lexer, Table_Manager *tm)
     return left;
 }
 
-ASTList *parse_argument_list(Token *current_token, Lexer *lexer, Table_Manager *tm)
+ASTList *parse_argument_list(Token *current_token, Lexer *lexer,
+                             Table_Manager *tm)
 {
     ASTList *head = malloc(sizeof(ASTList));
     head->statement = parse_expr(current_token, lexer, tm);
@@ -223,7 +228,7 @@ ASTNode *parse_function(Token *current_token, Lexer *lexer)
 
         ASTList **current = &(func->function.body);
 
-        // Supposed tb name of func
+        // on sattend a avoir les tokens dans le bon ordre
         *current_token = get_next_token(lexer);
 
         func->function.name = malloc(sizeof(struct ASTNode));
@@ -231,9 +236,32 @@ ASTNode *parse_function(Token *current_token, Lexer *lexer)
         func->function.name->identifier = current_token->function.name;
         func->function.args_size = 0;
 
-        // supposed to be args (td)
         *current_token = get_next_token(lexer);
-        *current_token = get_next_token(lexer);
+        printf("tokens fun\n");
+        while (current_token->tokentype != LBRACE)
+        {
+            print_token(*current_token);
+            *current_token = get_next_token(lexer);
+
+            if (current_token->tokentype == IDENTIFIER)
+            {
+                ASTNode *assign = malloc(sizeof(ASTNode));
+                assign->type = NODE_VARIABLE;
+                assign->var.offset = func->function.tm->offset;
+
+                assign->var.op.left = malloc(sizeof(ASTNode));
+                assign->var.op.left->type = NODE_IDENTIFIER;
+                assign->var.op.left->identifier = current_token->identifier;
+
+                assign->var.op.right = NULL;
+
+                set_variable(func->function.tm, assign->op.left->identifier,
+                             func->function.tm->offset);
+
+                func->function.tm->offset += sizeof(long);
+
+            }
+        }
 
         if (current_token->tokentype != LBRACE)
         {
@@ -241,7 +269,11 @@ ASTNode *parse_function(Token *current_token, Lexer *lexer)
         }
 
         *current_token = get_next_token(lexer);
-        *current_token = get_next_token(lexer);
+
+        if (strcmp(func->function.name->identifier, "main") == 0)
+        {
+            has_main = true;
+        }
 
         while (current_token->tokentype != RBRACE)
         {

@@ -3,6 +3,7 @@
 #include <math.h>
 
 #include "Variables.h"
+#include "register.h"
 
 ASTNode *create_number_node(int value)
 {
@@ -96,9 +97,11 @@ double my_max(double a, double b)
     return b;
 }
 
-FunctionEntry function_table[] = { { "log", builtin_log }, { "sin", builtin_sin },   { "cos", builtin_cos },
-                                   { "tan", builtin_tan }, { "sqrt", builtin_sqrt }, { "max", builtin_max },
-                                   { NULL, NULL } };
+FunctionEntry function_table[] = {
+    { "log", builtin_log }, { "sin", builtin_sin },   { "cos", builtin_cos },
+    { "tan", builtin_tan }, { "sqrt", builtin_sqrt }, { "max", builtin_max },
+    { NULL, NULL }
+};
 
 // double evaluate_function(ASTNode *node, Table_Manager *tm)
 // {
@@ -125,7 +128,8 @@ FunctionEntry function_table[] = { { "log", builtin_log }, { "sin", builtin_sin 
 //     // Chercher la fonction dans le tableau
 //     for (int i = 0; function_table[i].name != NULL; ++i)
 //     {
-//         if (strcmp(node->function.function_name, function_table[i].name) == 0)
+//         if (strcmp(node->function.function_name, function_table[i].name) ==
+//         0)
 //         {
 //             double result = function_table[i].func(args, count);
 //             free(args);
@@ -133,9 +137,8 @@ FunctionEntry function_table[] = { { "log", builtin_log }, { "sin", builtin_sin 
 //         }
 //     }
 
-//     printf("Erreur : fonction inconnue '%s'\n", node->function.function_name);
-//     free(args);
-//     exit(1);
+//     printf("Erreur : fonction inconnue '%s'\n",
+//     node->function.function_name); free(args); exit(1);
 // }
 
 double evaluate(ASTNode *node, Table_Manager *tm)
@@ -208,21 +211,16 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
     }
 
     case NODE_FUNCTION_DECL: {
-        // Ecrire Label
-        // (future) recuperer args
-        // write...
-
         emit_label(out, node->function.name->identifier);
 
-        emit_1(out, "pushq", REG_RBP);
-        emit_2(out, "movq", REG_RSP, REG_RBP);
-        emit_2(out, "subq", IMMEDIATE(node->function.tm->offset), REG_RSP);
+        emit_1(out, "pushq", REG(RBP));
+        emit_2(out, "movq", REG(RSP), REG(RBP));
+        emit_2(out, "subq", IMMEDIATE(node->function.tm->offset), REG(RSP));
 
         ASTList *current = node->function.body;
         while (current)
         {
             generate_code(out, current->statement, node->function.tm);
-
             current = current->next;
         }
 
@@ -232,55 +230,7 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
     case NODE_FLOAT: {
         break;
     }
-    case NODE_NUMBER: {
-        emit_1(out, "pushq", IMMEDIATE(node->value_int));
 
-        // emit_1(out, "pushq", REG_RAX);
-
-        break;
-    }
-    case NODE_ADD: {
-        generate_code(out, node->op.left, tm);
-        generate_code(out, node->op.right, tm);
-
-        emit_1(out, "popq", REG_RBX);
-        emit_1(out, "popq", REG_RAX);
-        emit_2(out, "add", REG_RBX, REG_RAX);
-        emit_1(out, "pushq", REG_RAX);
-
-        break;
-    }
-    case NODE_SUB: {
-        generate_code(out, node->op.left, tm);
-        generate_code(out, node->op.right, tm);
-
-        emit_1(out, "popq", REG_RBX);
-        emit_1(out, "popq", REG_RAX);
-        emit_2(out, "sub", REG_RBX, REG_RAX);
-        emit_1(out, "pushq", REG_RAX);
-    }
-    break;
-    case NODE_MUL: {
-        generate_code(out, node->op.left, tm);
-        generate_code(out, node->op.right, tm);
-
-        emit_1(out, "popq", REG_RBX);
-        emit_1(out, "popq", REG_RAX);
-        emit_2(out, "imulq", REG_RBX, REG_RAX);
-        emit_1(out, "pushq", REG_RAX);
-    }
-    break;
-
-    case NODE_DIV: {
-        generate_code(out, node->op.left, tm);
-        generate_code(out, node->op.right, tm);
-
-        emit_1(out, "popq", REG_RBX); // Diviseur
-        emit_1(out, "popq", REG_RAX); // Dividende
-        emit_0(out, "cqo"); // À ajouter à ton API
-        emit_1(out, "idivq", REG_RBX);
-        emit_1(out, "pushq", REG_RAX);
-    }
     break;
 
     case NODE_POW:
@@ -294,9 +244,9 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
     case NODE_UNARY_MINUS: {
         generate_code(out, node->unary.operand, tm);
 
-        emit_1(out, "popq", REG_RAX);
-        emit_1(out, "negq", REG_RAX);
-        emit_1(out, "pushq", REG_RAX);
+        emit_1(out, "popq", REG(RAX));
+        emit_1(out, "negq", REG(RAX));
+        emit_1(out, "pushq", REG(RAX));
 
         break;
     }
@@ -317,17 +267,27 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
         }
         if (var->created == false)
         {
-            // printf("var : [%s] doesnt exists for now, creating variable...\n", node->var.op.left->identifier);
+            // printf("var : [%s] doesnt exists for now, creating
+            // variable...\n", node->var.op.left->identifier);
 
-            generate_code(out, node->var.op.right, tm); // pushed into stack
+            // generate_code(out, node->var.op.right, tm);
+            Register reg = generate_expr(out, node->var.op.right);
 
             char buff[32];
             snprintf(buff, sizeof(buff), "-%d(%%rbp)", var->offset);
 
-            const struct Operand dest = { .type = OPERAND_REGISTER, .value.reg = buff };
+            Register dreg = { .offset = var->offset, .reg = RBP };
+
+            const struct Operand dest = { .type = OPERAND_REGISTER,
+                                          .value.reg = dreg };
 
             fprintf(out, "#VAR DEF\n");
-            emit_1(out, "popq", dest);
+            // emit_1(out, "popq", dest);
+
+            emit_2(out, "movq", REG(reg), dest);
+
+            free_reg(reg);
+
             var->created = true;
 
             break;
@@ -335,27 +295,109 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
 
         break;
     }
-    case NODE_VARIABLE_CALL: {
-        // printf("using variable offset: [%d]\n", node->varcall.offset);
-
-        char buff[32];
-        snprintf(buff, sizeof(buff), "-%d(%%rbp)", node->varcall.offset);
-
-        const struct Operand src = { .type = OPERAND_REGISTER, .value.reg = buff };
-        fprintf(out, "#VAR USE\n");
-
-        emit_1(out, "pushq", src);
-
-        break;
-    }
     case NODE_RETURN_STATMENT: {
-        generate_code(out, node->retst.expr, tm);
+        Register reg = generate_expr(out, node->retst.expr);
 
-        emit_1(out, "popq", REG_RAX);
+        // emit_1(out, "popq", REG(RAX));
+        emit_2(out, "movq", REG(reg), REG(RAX));
+
         emit_0(out, "leave");
         emit_0(out, "ret");
 
         break;
+    }
+
+    default:
+        break;
+    }
+}
+
+Register generate_expr(FILE *out, ASTNode *node)
+{
+    switch (node->type)
+    {
+    case NODE_NUMBER: {
+        Register free_reg = find_free_reg();
+
+        struct Operand op = { .type = OPERAND_REGISTER, .value = free_reg };
+        emit_2(out, "movq", IMMEDIATE(node->value_int), op);
+
+        use_reg(free_reg);
+
+        return free_reg;
+    }
+
+    break;
+
+    case NODE_ADD: {
+        Register r1 = generate_expr(out, node->op.right);
+        Register r2 = generate_expr(out, node->op.left);
+
+        emit_2(out, "addq", REG(r2), REG(r1));
+
+        free_reg(r2);
+
+        return r1;
+    }
+
+    case NODE_SUB: {
+        Register r1 = generate_expr(out, node->op.right);
+        Register r2 = generate_expr(out, node->op.left);
+
+        emit_2(out, "subq", REG(r1), REG(r2));
+
+        free_reg(r1);
+
+        return r2;
+    }
+
+    case NODE_MUL: {
+        Register r1 = generate_expr(out, node->op.right);
+        Register r2 = generate_expr(out, node->op.left);
+
+        emit_2(out, "imulq", REG(r1), REG(r2));
+
+        free_reg(r1);
+
+        return r2;
+    }
+
+    case NODE_DIV: {
+        Register r1 = generate_expr(out, node->op.right);
+        Register r2 = generate_expr(out, node->op.left);
+
+        emit_2(out, "movq", REG(r1), REG(EAX));
+        emit_2(out, "movq", IMMEDIATE(0), REG(EDX));
+        emit_2(out, "movq", REG(r2), REG(EBX));
+
+        emit_1(out, "divl", REG(EBX));
+
+        emit_2(out, "movq", REG(EAX), REG(r2));
+
+        free_reg(r1);
+
+        return r2;
+    }
+
+    case NODE_VARIABLE_CALL: {
+
+        // opti : Register should be able to be an offseted register so I can
+        // return directly the register containing the direct value
+
+        char buff[32];
+        snprintf(buff, sizeof(buff), "-%d(%%rbp)", node->varcall.offset);
+
+        Register reg = { .offset = node->varcall.offset, .reg = RBP };
+
+        const struct Operand src = { .type = OPERAND_REGISTER,
+                                     .value.reg = reg };
+        fprintf(out, "#VAR USE\n");
+
+        Register freereg = find_free_reg();
+
+        emit_2(out, "movq", src, REG(freereg));
+
+        return freereg;
     }
 
     default:
@@ -490,8 +532,7 @@ void print_ast(ASTNode *node, int indent)
         }
         break;
     }
-    case NODE_RETURN_STATMENT: 
-    {
+    case NODE_RETURN_STATMENT: {
         printf("RETURN\n");
         break;
     }

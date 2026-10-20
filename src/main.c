@@ -7,6 +7,8 @@
 #include "parser.h"
 #include "std.h"
 
+bool has_main = false;
+
 int func()
 {
     char *input = "value = sqrt(4) + cos(pi/2) + log(e) + max(2/2, 5/3); "
@@ -89,6 +91,12 @@ int main(int argc, char **argv)
     debug_lexer(&lexer);
 
     ASTNode *root = parse_program(&current_token, &lexer);
+
+    if(has_main == false)
+    {
+        printf("No Main Symbol\n");
+        exit(1);
+    }
 
     generate_code(out, root, NULL);
 

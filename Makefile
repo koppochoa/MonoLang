@@ -1,9 +1,6 @@
 CC = gcc
 
-CFLAGS= -pedantic -Wvla -Wall -g -Wextra -Iinclude -Iinclude/Core -Iinclude/Core/Types \
-	       -Iinclude/Core/Utils \
-	       -Iinclude/Core/Network -Iinclude/Core/Security \
-	       -Iinclude/Core/Protocol
+CFLAGS= -pedantic -Wvla -Wall -g -Wextra -Iinclude
 
 LDFLAGS=-lm
 

@@ -77,11 +77,18 @@ void print_token(Token token)
     case RETURN_STATMENT:
         printf("RETURN_STATMENT\n");
         break;
+    
+    case COMMA:
+        printf("COMMA\n");
+        break;
 
     case INVALID:
+        printf("INVALID TOKEN\n");
+
         break;
     default:
-        printf("INVALID TOKEN\n");
+        printf("UNKNOW TOKEN\n");
+
         break;
     }
 }

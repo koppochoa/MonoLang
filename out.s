@@ -11,29 +11,24 @@ _start:
 main:
    pushq %rbp
    movq %rsp, %rbp
-   subq $32, %rsp
-   pushq $0
+   subq $40, %rsp
+   movq $2, %rax
+   movq $3, %rbx
+   addq %rbx, %rax
+   movq $2, %rbx
+   movq $1, %rcx
+   addq %rcx, %rbx
+   imulq %rax, %rbx
 #VAR DEF
-   popq -8(%rbp)
-   pushq $0
-#VAR DEF
-   popq -16(%rbp)
-   pushq $2
+   movq %rbx, -24(%rbp)
+   movq $1, %rax
 #VAR USE
-   pushq -16(%rbp)
-   popq %rbx
-   popq %rax
-   imulq %rbx, %rax
-   pushq %rax
-   pushq $1
-   popq %rbx
-   popq %rax
-   add %rbx, %rax
-   pushq %rax
+   movq -24(%rbp), %rbx
+   addq %rbx, %rax
 #VAR DEF
-   popq -24(%rbp)
+   movq %rax, -32(%rbp)
 #VAR USE
-   pushq -24(%rbp)
-   popq %rax
+   movq -32(%rbp), %rax
+   movq %rax, %rax
    leave
    ret

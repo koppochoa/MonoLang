@@ -1,8 +1,6 @@
 
-fn main(){
-    a=0;
-    b=0;
-    c=2*b+1;
-
-    return c;
+fn main(x, y){
+    a=(1+2)*(3+2);
+    b=a+1;
+    return b;
 }
