@@ -213,11 +213,14 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
     case NODE_FUNCTION_DECL: {
         emit_label(out, node->function.name->identifier);
 
-        emit_1(out, "pushq", REG(RBP));
-        emit_2(out, "movq", REG(RSP), REG(RBP));
-        emit_2(out, "subq", IMMEDIATE(node->function.tm->offset), REG(RSP));
+        Register rbp = {.offset = 0, .reg = RBP};
+        Register rsp = {.offset = 0, .reg = RSP};
 
-        int varcount = 0;
+        emit_1(out, "pushq",REG(rbp));
+        emit_2(out, "movq", REG(rsp), REG(rbp));
+        emit_2(out, "subq", IMMEDIATE(node->function.tm->offset), REG(rsp));
+
+        unsigned long int varcount = 0;
         int varoffset = 16;
 
         fprintf(out, "#START ARGUMENTS INITIALIZATION\n");
@@ -226,7 +229,7 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
         while (args_current)
         {
             generate_args(out, args_current->statement, node->function.used,
-                          &varcount, &varoffset, node->function.tm);
+                          &varcount, &varoffset);
             args_current = args_current->next;
         }
         fprintf(out, "#END ARGUMENTS INITIALIZATION\n");
@@ -250,20 +253,20 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
     case NODE_POW:
         break;
 
-    // case NODE_UNARY_PLUS: {
-    //     generate_code(out, node->unary.operand, tm);
-    // }
-    // break;
+        // case NODE_UNARY_PLUS: {
+        //     generate_code(out, node->unary.operand, tm);
+        // }
+        // break;
 
-    // case NODE_UNARY_MINUS: {
-    //     generate_code(out, node->unary.operand, tm);
+        // case NODE_UNARY_MINUS: {
+        //     generate_code(out, node->unary.operand, tm);
 
-    //     emit_1(out, "popq", REG(RAX));
-    //     emit_1(out, "negq", REG(RAX));
-    //     emit_1(out, "pushq", REG(RAX));
+        //     emit_1(out, "popq", REG(RAX));
+        //     emit_1(out, "negq", REG(RAX));
+        //     emit_1(out, "pushq", REG(RAX));
 
-    //     break;
-    // }
+        //     break;
+        // }
 
     case NODE_VARIABLE: {
         if (!tm)
@@ -307,8 +310,7 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
     case NODE_RETURN_STATMENT: {
         Register reg = generate_expr(out, node->retst.expr);
 
-        // emit_1(out, "popq", REG(RAX));
-        emit_2(out, "movq", REG(reg), REG(RAX));
+        emit_2(out, "movq", REG(reg), REG(REG_RAX));
 
         emit_0(out, "leave");
         emit_0(out, "ret");
@@ -328,7 +330,7 @@ Register generate_expr(FILE *out, ASTNode *node)
     case NODE_NUMBER: {
         Register free_reg = find_free_reg();
 
-        struct Operand op = { .type = OPERAND_REGISTER, .value = free_reg };
+        struct Operand op = { .type = OPERAND_REGISTER, .value = {.reg = free_reg} };
         emit_2(out, "movq", IMMEDIATE(node->value_int), op);
 
         use_reg(free_reg);
@@ -385,13 +387,13 @@ Register generate_expr(FILE *out, ASTNode *node)
         Register r1 = generate_expr(out, node->op.right);
         Register r2 = generate_expr(out, node->op.left);
 
-        emit_2(out, "movq", REG(r1), REG(EAX));
-        emit_2(out, "movq", IMMEDIATE(0), REG(EDX));
-        emit_2(out, "movq", REG(r2), REG(EBX));
+        emit_2(out, "movq", REG(r1), REG(REG_EAX));
+        emit_2(out, "movq", IMMEDIATE(0), REG(REG_EDX));
+        emit_2(out, "movq", REG(r2), REG(REG_EBX));
 
-        emit_1(out, "divl", REG(EBX));
+        emit_1(out, "divl", REG(REG_EBX));
 
-        emit_2(out, "movq", REG(EAX), REG(r2));
+        emit_2(out, "movq", REG(REG_EAX), REG(r2));
 
         free_reg(r1);
 
@@ -417,15 +419,19 @@ Register generate_expr(FILE *out, ASTNode *node)
     default:
         break;
     }
+
+    Register r = { r.reg = REG_ERR, r.offset = 0 };
+    return r;
 }
 
-void generate_args(FILE *out, ASTNode *node, bool *used, int *varcount,
-                   int *varoffset, Table_Manager *tm)
+void generate_args(FILE *out, ASTNode *node, bool *used, unsigned long int *varcount,
+                   int *varoffset)
 {
+    Register varout = { .offset = node->var.offset, .reg = RBP };
+
     if (*varcount >= ARGUMENTS_REG_COUNT)
     {
         Register varin = { .offset = *varoffset, .reg = RBP };
-        Register varout = { .offset = node->var.offset, .reg = RBP };
 
         Register tmpr = find_free_reg();
 
@@ -440,10 +446,7 @@ void generate_args(FILE *out, ASTNode *node, bool *used, int *varcount,
 
     Register reg = find_free_reg_from(used);
 
-    Register var = { .offset = node->var.offset, .reg = RBP };
-
-    const struct Operand src = { .type = OPERAND_REGISTER, .value.reg = reg };
-    emit_2(out, "movq", REG(reg.reg), REG(var));
+    emit_2(out, "movq", REG(reg), REG(varout));
 
     use_reg_from(used, *varcount);
     (*varcount)++;

@@ -7,7 +7,7 @@ Register find_free_reg()
     Register reg = {0x0};
     reg.reg = REG_ERR;
 
-    for(int i = 0; i < ALLOCATABLE_REG_COUNT; i++)
+    for(long unsigned int i = 0; i < ALLOCATABLE_REG_COUNT; i++)
     {
         if(rm.used[i] == false)
         {
@@ -34,7 +34,7 @@ Register find_free_reg_from(bool* arr)
     Register reg = {0x0};
     reg.reg = REG_ERR;
 
-    for(int i = 0; i < ARGUMENTS_REG_COUNT; i++)
+    for(long unsigned int i = 0; i < ARGUMENTS_REG_COUNT; i++)
     {
         if(arr[i] == false)
         {

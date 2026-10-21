@@ -120,6 +120,6 @@ ASTNode *create_op_node(NodeType type, ASTNode *left, ASTNode *right);
 double evaluate(ASTNode *node, Table_Manager *tm);
 void generate_code(FILE *out, ASTNode *node, Table_Manager *tm);
 Register generate_expr(FILE* out, ASTNode* node);
-void generate_args(FILE* out, ASTNode* node, bool* used,int* varcount, int* varoffset, Table_Manager* tm);
+void generate_args(FILE* out, ASTNode* node, bool* used,unsigned long int* varcount, int* varoffset);
 void free_ast(ASTNode *node);
 void print_ast(ASTNode *node, int indent);

@@ -112,7 +112,7 @@ void skip_spaces(Lexer *lexer)
     }
 }
 
-Token lex_eof(const char current_char)
+Token lex_eof()
 {
     Token token;
     token.tokentype = TOKEN_EOF;
@@ -258,9 +258,6 @@ Token lex_number(Lexer *lexer)
 
 Token get_next_token(Lexer *lexer)
 {
-    Token token;
-    token.tokentype = INVALID;
-
     skip_spaces(lexer);
 
     char current_char = lexer->data[lexer->position];
@@ -283,7 +280,7 @@ Token get_next_token(Lexer *lexer)
     }
 
     if (current_char == '\0')
-        return lex_eof(current_char);
+        return lex_eof();
 
     if (isalpha(current_char))
         return lex_identifier(lexer);

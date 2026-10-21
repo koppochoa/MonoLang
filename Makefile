@@ -1,6 +1,6 @@
 CC = gcc
 
-CFLAGS= -pedantic -Wvla -Wall -g -Wextra -Iinclude
+CFLAGS=-std=c17 -pedantic -Wvla -Wall -g -Wextra -Iinclude
 
 LDFLAGS=-lm
 

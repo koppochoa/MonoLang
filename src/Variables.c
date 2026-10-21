@@ -1,5 +1,6 @@
 #include "Variables.h"
 
+#include "utils.h"
 void init_table_manager(Table_Manager *tm)
 {
     tm->variable_count = 0;

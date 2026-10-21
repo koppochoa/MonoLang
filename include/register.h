@@ -34,6 +34,16 @@ typedef struct
     int offset;
 } Register;
 
+#define REG_RAX ((Register){.offset = 0, .reg = RAX})
+
+#define REG_EAX ((Register){.offset = 0, .reg = EAX})
+#define REG_EBX ((Register){.offset = 0, .reg = EBX})
+#define REG_ECX ((Register){.offset = 0, .reg = ECX})
+#define REG_EDX ((Register){.offset = 0, .reg = EDX})
+
+
+
+
 static const RegisterId allocatable_regs[] = { RBX, RCX, RDX, RSI, RDI, R8, R9, R10, R11, R12, R13, R14, R15 };
 static const RegisterId arguments_regs[] = { RDI, RSI, RDX, RCX, R8, R9};
 
@@ -54,4 +64,4 @@ void use_reg(Register reg);
 void free_reg(Register reg);
 
 Register find_free_reg_from(bool* arr);
-void use_reg_from(bool* arr, int idx);
+void use_reg_from(bool* arr, int i);

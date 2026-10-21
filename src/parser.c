@@ -2,8 +2,11 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "utils.h"
 
 #include "AST.h"
+
+
 
 ASTNode *parse_factor(Token *current_token, Lexer *lexer, Table_Manager *tm)
 {
@@ -225,7 +228,7 @@ ASTNode *parse_function(Token *current_token, Lexer *lexer)
         func->function.tm = malloc(sizeof(Table_Manager));
         func->function.tm->offset = sizeof(long);
         func->function.tm->variable_count = 0;
-        for (int i = 0; i < ARGUMENTS_REG_COUNT; i++)
+        for (long unsigned int i = 0; i < ARGUMENTS_REG_COUNT; i++)
         {
             func->function.used[i] = false;
         }

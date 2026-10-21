@@ -19,8 +19,10 @@ struct Operand
     } value;
 };
 
-#define REG(a)((struct Operand){ .type = OPERAND_REGISTER, .value.reg = a })
-#define IMMEDIATE(a)((struct Operand){ .type = OPERAND_IMMEDIATE, .value.immediate = a })
+#define REG(a)((struct Operand){ .type = OPERAND_REGISTER, .value = { .reg = a}})
+
+
+#define IMMEDIATE(a)((struct Operand){ .type = OPERAND_IMMEDIATE, .value = {.immediate = a} })
 
 void emit_operand(FILE *out, const struct Operand op);
 void emit_0(FILE *out, const char *op);
