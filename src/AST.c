@@ -250,20 +250,20 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
     case NODE_POW:
         break;
 
-    case NODE_UNARY_PLUS: {
-        generate_code(out, node->unary.operand, tm);
-    }
-    break;
+    // case NODE_UNARY_PLUS: {
+    //     generate_code(out, node->unary.operand, tm);
+    // }
+    // break;
 
-    case NODE_UNARY_MINUS: {
-        generate_code(out, node->unary.operand, tm);
+    // case NODE_UNARY_MINUS: {
+    //     generate_code(out, node->unary.operand, tm);
 
-        emit_1(out, "popq", REG(RAX));
-        emit_1(out, "negq", REG(RAX));
-        emit_1(out, "pushq", REG(RAX));
+    //     emit_1(out, "popq", REG(RAX));
+    //     emit_1(out, "negq", REG(RAX));
+    //     emit_1(out, "pushq", REG(RAX));
 
-        break;
-    }
+    //     break;
+    // }
 
     case NODE_VARIABLE: {
         if (!tm)
@@ -284,7 +284,6 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
             // printf("var : [%s] doesnt exists for now, creating
             // variable...\n", node->var.op.left->identifier);
 
-            // generate_code(out, node->var.op.right, tm);
             Register reg = generate_expr(out, node->var.op.right);
 
             Register dreg = { .offset = var->offset, .reg = RBP };
@@ -337,7 +336,17 @@ Register generate_expr(FILE *out, ASTNode *node)
         return free_reg;
     }
 
-    break;
+    case NODE_UNARY_PLUS: {
+        Register reg = generate_expr(out, node->unary.operand);
+        return reg;
+    }
+
+    case NODE_UNARY_MINUS: {
+        Register reg = generate_expr(out, node->unary.operand);
+
+        emit_1(out, "negq", REG(reg));
+        return reg;
+    }
 
     case NODE_ADD: {
         Register r1 = generate_expr(out, node->op.right);
@@ -390,7 +399,6 @@ Register generate_expr(FILE *out, ASTNode *node)
     }
 
     case NODE_VARIABLE_CALL: {
-
         Register reg = { .offset = node->varcall.offset, .reg = RBP };
 
         const struct Operand src = { .type = OPERAND_REGISTER,
@@ -400,6 +408,8 @@ Register generate_expr(FILE *out, ASTNode *node)
         Register freereg = find_free_reg();
 
         emit_2(out, "movq", src, REG(freereg));
+
+        use_reg(freereg);
 
         return freereg;
     }

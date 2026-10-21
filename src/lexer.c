@@ -265,6 +265,17 @@ Token get_next_token(Lexer *lexer)
 
     char current_char = lexer->data[lexer->position];
 
+    // comments
+    if(current_char == '#')
+    {
+        while(current_char != '\n' && current_char != '\0')
+        {
+            lexer->position++;
+            current_char = lexer->data[lexer->position];
+        }
+        return get_next_token(lexer);
+    }
+
     if (current_char == '\n')
     {
         lexer->position++;

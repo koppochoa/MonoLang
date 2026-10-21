@@ -19,17 +19,8 @@ struct Operand
     } value;
 };
 
-// #define REG_RBX ((struct Operand){ .type = OPERAND_REGISTER, .value.reg = "%rbx" })
-// #define REG_RAX ((struct Operand){ .type = OPERAND_REGISTER, .value.reg = "%rax" })
-// #define REG_RDI ((struct Operand){ .type = OPERAND_REGISTER, .value.reg = "%rdi" })
-// #define REG_RBP ((struct Operand){ .type = OPERAND_REGISTER, .value.reg = "%rbp" })
-// #define REG_RSP ((struct Operand){ .type = OPERAND_REGISTER, .value.reg = "%rsp" })
-
 #define REG(a)((struct Operand){ .type = OPERAND_REGISTER, .value.reg = a })
-
-
 #define IMMEDIATE(a)((struct Operand){ .type = OPERAND_IMMEDIATE, .value.immediate = a })
-
 
 void emit_operand(FILE *out, const struct Operand op);
 void emit_0(FILE *out, const char *op);
