@@ -4,7 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-void print_error_at_position(const char *input, int position, const char *message)
+void print_error_at_position(const char *input, int position,
+                             const char *message)
 {
     fprintf(stderr, "%s\n", input);
 
@@ -77,14 +78,16 @@ void print_token(Token token)
     case RETURN_STATMENT:
         printf("RETURN_STATMENT\n");
         break;
-    
+
     case COMMA:
         printf("COMMA\n");
         break;
 
     case INVALID:
         printf("INVALID TOKEN\n");
-
+        break;
+    case VARTYPE:
+        printf("VARTYPE\n");
         break;
     default:
         printf("UNKNOW TOKEN\n");
@@ -178,7 +181,9 @@ Token lex_operators(Lexer *lexer)
         return token;
     default:
         lexer->position++;
-        print_error_at_position(lexer->data, lexer->position, "Caractère non reconnu");
+        print_error_at_position(lexer->data, lexer->position,
+                                "Caractère non reconnu");
+        printf("Char; %c\n", lexer->data[lexer->position - 1]);
         exit(1);
     }
 }
@@ -212,6 +217,38 @@ Token lex_identifier(Lexer *lexer)
         return token;
     }
 
+    if (strcmp(ident, "int8") == 0)
+    {
+        token.tokentype = VARTYPE;
+        token.variable.type = INT8;
+        // potentiel free
+        return token;
+    }
+
+    if (strcmp(ident, "int16") == 0)
+    {
+        token.tokentype = VARTYPE;
+        token.variable.type = INT16;
+        // potentiel free
+        return token;
+    }
+
+    if (strcmp(ident, "int32") == 0)
+    {
+        token.tokentype = VARTYPE;
+        token.variable.type = INT32;
+        // potentiel free
+        return token;
+    }
+
+    if (strcmp(ident, "int64") == 0)
+    {
+        token.tokentype = VARTYPE;
+        token.variable.type = INT64;
+        // potentiel free
+        return token;
+    }
+
     token.tokentype = IDENTIFIER;
     token.identifier = ident;
     return token;
@@ -225,7 +262,8 @@ Token lex_number(Lexer *lexer)
     int i = 0;
     int point_count = 0;
 
-    while (is_digit(lexer->data[lexer->position]) || lexer->data[lexer->position] == '.')
+    while (is_digit(lexer->data[lexer->position])
+           || lexer->data[lexer->position] == '.')
     {
         if (lexer->data[lexer->position] == '.')
         {
@@ -263,9 +301,9 @@ Token get_next_token(Lexer *lexer)
     char current_char = lexer->data[lexer->position];
 
     // comments
-    if(current_char == '#')
+    if (current_char == '#')
     {
-        while(current_char != '\n' && current_char != '\0')
+        while (current_char != '\n' && current_char != '\0')
         {
             lexer->position++;
             current_char = lexer->data[lexer->position];

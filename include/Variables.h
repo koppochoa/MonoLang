@@ -1,16 +1,26 @@
 #pragma once
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-typedef struct 
+typedef enum
 {
-    char* name;
+    INT8,
+    INT16,
+    INT32,
+    INT64
+
+} VariableType;
+
+typedef struct
+{
+    char *name;
     int offset;
     bool created;
-}Variable;
+
+} Variable;
 
 #define MAX_VARIABLES 100
 
@@ -19,10 +29,12 @@ typedef struct
     Variable symbol_table[MAX_VARIABLES];
     int variable_count;
     int offset;
-}Table_Manager;
+} Table_Manager;
 
-void init_table_manager(Table_Manager* tm);
+void init_table_manager(Table_Manager *tm);
 
-void set_variable(Table_Manager* tm, const char* name,int offset);
-Variable* lookupvariable(Table_Manager* tm,char* name);
-void print_variables(Table_Manager* tm);
+void set_variable(Table_Manager *tm, const char *name, int offset);
+Variable *lookupvariable(Table_Manager *tm, char *name);
+void print_variables(Table_Manager *tm);
+void print_vartype(VariableType type, int indent);
+size_t sizeofvartype(VariableType type);

@@ -75,7 +75,7 @@ int main(int argc, char **argv)
     generate_code(out, root, NULL);
 
 
-    // print_ast(root, 0);
+    print_ast(root, 0);
     // print_variables(&tm);
 
     fclose(in);

@@ -2,11 +2,9 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "utils.h"
 
 #include "AST.h"
-
-
+#include "utils.h"
 
 ASTNode *parse_factor(Token *current_token, Lexer *lexer, Table_Manager *tm)
 {
@@ -51,63 +49,119 @@ ASTNode *parse_factor(Token *current_token, Lexer *lexer, Table_Manager *tm)
         *current_token = get_next_token(lexer); // consomme ')'
         return node;
     }
+    // else if (current_token->tokentype == IDENTIFIER)
+    // {
+    //     char *name = strdup(current_token->identifier);
+    //     *current_token = get_next_token(lexer);
+
+    //     if (current_token->tokentype == ASSIGN)
+    //     {
+    //         *current_token = get_next_token(lexer);
+    //         ASTNode *expr = parse_expr(current_token, lexer, tm);
+
+    //         ASTNode *assign = malloc(sizeof(ASTNode));
+    //         assign->type = NODE_VARIABLE;
+    //         assign->var.offset = -tm->offset;
+
+    //         assign->var.op.left = malloc(sizeof(ASTNode));
+    //         assign->var.op.left->type = NODE_IDENTIFIER;
+    //         assign->var.op.left->identifier = name;
+
+    //         assign->var.op.right = expr;
+
+    //         set_variable(tm, assign->op.left->identifier, -tm->offset);
+
+    //         return assign;
+    //     }
+    //     else if (current_token->tokentype == LPARENTHESIS)
+    //     {
+    //         *current_token = get_next_token(lexer); // consomme '('
+    //         struct ASTNode *func_call = malloc(sizeof(struct ASTNode));
+    //         func_call->type = NODE_FUNCTION_CALL;
+    //         func_call->function.name->identifier = name;
+    //         // func_call->function.args = parse_argument_list(current_token,
+    //         // lexer);
+
+    //         if (current_token->tokentype != RPARENTHESIS)
+    //         {
+    //             printf("Erreur : ')' attendu après les arguments\n");
+    //             exit(1);
+    //         }
+    //         *current_token = get_next_token(lexer); // consomme ')'
+    //         return func_call;
+    //     }
+    //     else
+    //     {
+    //         Variable *var = lookupvariable(tm, name);
+    //         if (var == NULL)
+    //         {
+    //             printf("Erreur : variable non existante\n");
+    //             exit(1);
+    //         }
+    //         else
+    //         {
+    //             ASTNode *res = malloc(sizeof(ASTNode));
+    //             res->type = NODE_VARIABLE_CALL;
+    //             res->varcall.offset = var->offset;
+    //             return res;
+    //         }
+    //     }
+    // }
     else if (current_token->tokentype == IDENTIFIER)
     {
         char *name = strdup(current_token->identifier);
+
         *current_token = get_next_token(lexer);
-
-        if (current_token->tokentype == ASSIGN)
+        Variable *var = lookupvariable(tm, name);
+        if (var == NULL)
         {
-            *current_token = get_next_token(lexer);
-            ASTNode *expr = parse_expr(current_token, lexer, tm);
-
-            ASTNode *assign = malloc(sizeof(ASTNode));
-            assign->type = NODE_VARIABLE;
-            assign->var.offset = -tm->offset;
-
-            assign->var.op.left = malloc(sizeof(ASTNode));
-            assign->var.op.left->type = NODE_IDENTIFIER;
-            assign->var.op.left->identifier = name;
-
-            assign->var.op.right = expr;
-
-            set_variable(tm, assign->op.left->identifier, -tm->offset);
-
-            return assign;
-        }
-        else if (current_token->tokentype == LPARENTHESIS)
-        {
-            *current_token = get_next_token(lexer); // consomme '('
-            struct ASTNode *func_call = malloc(sizeof(struct ASTNode));
-            func_call->type = NODE_FUNCTION_CALL;
-            func_call->function.name->identifier = name;
-            // func_call->function.args = parse_argument_list(current_token,
-            // lexer);
-
-            if (current_token->tokentype != RPARENTHESIS)
-            {
-                printf("Erreur : ')' attendu après les arguments\n");
-                exit(1);
-            }
-            *current_token = get_next_token(lexer); // consomme ')'
-            return func_call;
+            printf("Erreur : variable non existante\n");
+            exit(1);
         }
         else
         {
-            Variable *var = lookupvariable(tm, name);
-            if (var == NULL)
+            ASTNode *res = malloc(sizeof(ASTNode));
+            res->type = NODE_VARIABLE_CALL;
+            res->varcall.offset = var->offset;
+            return res;
+        }
+    }
+    else if (current_token->tokentype
+             == VARTYPE) // schem <vartype> <identifier> <assign> <value>
+    {
+        VariableType type = current_token->variable.type;
+
+        *current_token = get_next_token(lexer);
+
+        if (current_token->tokentype == IDENTIFIER)
+        {
+            char *name = strdup(current_token->identifier);
+            *current_token = get_next_token(lexer);
+
+            if (current_token->tokentype == ASSIGN)
             {
-                printf("Erreur : variable non existante\n");
-                exit(1);
-            }
-            else
-            {
-                ASTNode *res = malloc(sizeof(ASTNode));
-                res->type = NODE_VARIABLE_CALL;
-                res->varcall.offset = var->offset;
-                return res;
+                *current_token = get_next_token(lexer);
+                ASTNode *expr = parse_expr(current_token, lexer, tm);
+
+                ASTNode *assign = malloc(sizeof(ASTNode));
+                assign->type = NODE_VARIABLE;
+
+                assign->var.type = type;
+
+                assign->var.offset = -tm->offset;
+                assign->var.op.right = expr;
+
+                assign->var.op.left = malloc(sizeof(ASTNode));
+                assign->var.op.left->type = NODE_IDENTIFIER;
+                assign->var.op.left->identifier = name;
+
+                set_variable(tm, assign->op.left->identifier, -tm->offset);
+
+                return assign;
             }
         }
+
+        // else err
     }
     else if (current_token->tokentype == RETURN_STATMENT)
     {
@@ -299,7 +353,9 @@ ASTNode *parse_function(Token *current_token, Lexer *lexer)
             {
                 // printf("ident offset : %d\n", func->function.tm->offset);
 
-                func->function.tm->offset += sizeof(long);
+                // func->function.tm->offset += sizeof(long);
+                func->function.tm->offset += sizeofvartype(stmt->var.type);
+
             }
 
             ASTList *new = malloc(sizeof(ASTList));

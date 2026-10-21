@@ -47,3 +47,45 @@ void print_variables(Table_Manager *tm)
         printf("%s\n", tm->symbol_table[i].name);
     }
 }
+
+size_t sizeofvartype(VariableType type)
+{
+    switch (type)
+    {
+    case INT8:
+        return 1;
+    case INT16:
+        return 2;
+    case INT32:
+        return 4;
+    case INT64:
+        return 8;
+    default:
+        return 0;
+        break;
+    }
+}
+
+void print_vartype(VariableType type, int indent)
+{
+    for (int i = 0; i < indent; ++i)
+        printf("  ");
+    printf("TYPE: ");
+    switch (type)
+    {
+    case INT8:
+        printf("INT8\n");
+        break;
+    case INT16:
+        printf("INT16\n");
+        break;
+    case INT32:
+        printf("INT32\n");
+        break;
+    case INT64:
+        printf("INT64\n");
+        break;
+    default:
+        break;
+    }
+}

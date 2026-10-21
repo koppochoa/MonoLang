@@ -1,16 +1,11 @@
 
 fn main(){
 
-    void
-    void* -> 64
-    int8
-    int16
-    int32
-    int64
+    #void
+    #void* -> 64
+    int64 a = 42;
+    int64 b = 10;
+    #int8 c = a + b;
 
-    a =(1+2)*(3+2);
-    b=-1+a;
-
-    # some comments
-    return b;
+    #return 0;
 }

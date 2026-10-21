@@ -10,9 +10,11 @@ OBJS = $(patsubst src/%.c, build/%.o, $(SRCS))
 
 TARGET= monoc
 
-all: $(TARGET)
+rebuild: 
+	make clean
+	make monoc
 
-$(TARGET): $(OBJS)
+monoc: $(OBJS)
 	$(CC) -g -o $@ $^ $(LDFLAGS)
 
 build/%.o: src/%.c 

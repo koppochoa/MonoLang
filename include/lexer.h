@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "Variables.h"
+
 typedef enum
 {
     NUMBER,
@@ -36,7 +38,13 @@ typedef enum
     IF_STATEMENT,
     WHILE_STATEMENT,
 
-    TYPE_INT,
+    VARTYPE,
+
+    TYPE_INT8,
+    TYPE_INT16,
+    TYPE_INT32,
+    TYPE_INT64,
+
     TYPE_FLOAT,
     TYPE_BOOL,
     TYPE_CHAR,
@@ -62,6 +70,12 @@ typedef struct
     union
     {
         int value_int;
+
+        union variable {
+            // int value;
+            VariableType type;   
+        }variable;
+
         double value_float;
         char *identifier;
         struct Function function;

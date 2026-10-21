@@ -1,13 +1,19 @@
 #include "emit.h"
 
+void emit_classic(FILE* out, const Register reg, VariableType type)
+{
+    
+}
+
 void emit_register(FILE *out, const Register reg)
 {
     if (reg.offset != 0)
     {
-        if(reg.offset < 0)
+        if (reg.offset < 0)
         {
             fprintf(out, "-%d(", -reg.offset);
-        }else
+        }
+        else
             fprintf(out, "%d(", reg.offset);
     }
 
@@ -94,4 +100,43 @@ void emit_label(FILE *out, const char *label)
     fprintf(out, ".globl %s\n", label);
     fprintf(out, ".type %s, @function\n", label);
     fprintf(out, "%s:\n", label);
+}
+
+char *mov(VariableType type)
+{
+    char *res = malloc(sizeof(char) * 5); // XXX Y EOF
+    if (!res)
+        return NULL;
+
+    switch (type)
+
+    {
+    case INT8:
+        strcpy(res, "movb\0");
+        break;
+    case INT16:
+        strcpy(res, "movw\0");
+
+        break;
+
+    case INT32:
+        strcpy(res, "movl\0");
+
+        break;
+
+    case INT64:
+        strcpy(res, "movq\0");
+        break;
+    }
+
+    return res;
+}
+
+char* get_mnem(Mnem mn, VariableType type)
+{
+    switch (mn)
+    {
+    case MOV:
+        return mov(type);
+    }
 }

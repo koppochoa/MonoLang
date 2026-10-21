@@ -213,10 +213,10 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
     case NODE_FUNCTION_DECL: {
         emit_label(out, node->function.name->identifier);
 
-        Register rbp = {.offset = 0, .reg = RBP};
-        Register rsp = {.offset = 0, .reg = RSP};
+        Register rbp = { .offset = 0, .reg = RBP };
+        Register rsp = { .offset = 0, .reg = RSP };
 
-        emit_1(out, "pushq",REG(rbp));
+        emit_1(out, "pushq", REG(rbp));
         emit_2(out, "movq", REG(rsp), REG(rbp));
         emit_2(out, "subq", IMMEDIATE(node->function.tm->offset), REG(rsp));
 
@@ -243,31 +243,6 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
 
         break;
     }
-
-    case NODE_FLOAT: {
-        break;
-    }
-
-    break;
-
-    case NODE_POW:
-        break;
-
-        // case NODE_UNARY_PLUS: {
-        //     generate_code(out, node->unary.operand, tm);
-        // }
-        // break;
-
-        // case NODE_UNARY_MINUS: {
-        //     generate_code(out, node->unary.operand, tm);
-
-        //     emit_1(out, "popq", REG(RAX));
-        //     emit_1(out, "negq", REG(RAX));
-        //     emit_1(out, "pushq", REG(RAX));
-
-        //     break;
-        // }
-
     case NODE_VARIABLE: {
         if (!tm)
         {
@@ -284,10 +259,8 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
         }
         if (var->created == false)
         {
-            // printf("var : [%s] doesnt exists for now, creating
-            // variable...\n", node->var.op.left->identifier);
-
-            Register reg = generate_expr(out, node->var.op.right);
+            Register reg =
+                generate_expr(out, node->var.op.right, node->var.type);
 
             Register dreg = { .offset = var->offset, .reg = RBP };
 
@@ -296,7 +269,12 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
 
             fprintf(out, "#VAR DEF\n");
 
-            emit_2(out, "movq", REG(reg), dest);
+            char *mv = mov(node->var.type);
+
+            emit_2(out, mv, REG(reg), dest);
+
+            if (mv)
+                free(mv);
 
             free_reg(reg);
 
@@ -308,7 +286,7 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
         break;
     }
     case NODE_RETURN_STATMENT: {
-        Register reg = generate_expr(out, node->retst.expr);
+        Register reg = generate_expr(out, node->retst.expr, node->retst.type);
 
         emit_2(out, "movq", REG(reg), REG(REG_RAX));
 
@@ -323,15 +301,20 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
     }
 }
 
-Register generate_expr(FILE *out, ASTNode *node)
+Register generate_expr(FILE *out, ASTNode *node, VariableType type)
 {
     switch (node->type)
     {
     case NODE_NUMBER: {
         Register free_reg = find_free_reg();
 
-        struct Operand op = { .type = OPERAND_REGISTER, .value = {.reg = free_reg} };
-        emit_2(out, "movq", IMMEDIATE(node->value_int), op);
+        char *mv = mov(type);
+
+        emit_2(out, mv, IMMEDIATE(node->value_int), REG(free_reg));
+        // emit_2(out, "movq", IMMEDIATE(node->value_int), op);
+
+        if (mv)
+            free(mv);
 
         use_reg(free_reg);
 
@@ -339,20 +322,20 @@ Register generate_expr(FILE *out, ASTNode *node)
     }
 
     case NODE_UNARY_PLUS: {
-        Register reg = generate_expr(out, node->unary.operand);
+        Register reg = generate_expr(out, node->unary.operand, type);
         return reg;
     }
 
     case NODE_UNARY_MINUS: {
-        Register reg = generate_expr(out, node->unary.operand);
+        Register reg = generate_expr(out, node->unary.operand, type);
 
         emit_1(out, "negq", REG(reg));
         return reg;
     }
 
     case NODE_ADD: {
-        Register r1 = generate_expr(out, node->op.right);
-        Register r2 = generate_expr(out, node->op.left);
+        Register r1 = generate_expr(out, node->op.right, type);
+        Register r2 = generate_expr(out, node->op.left, type);
 
         emit_2(out, "addq", REG(r2), REG(r1));
 
@@ -362,8 +345,8 @@ Register generate_expr(FILE *out, ASTNode *node)
     }
 
     case NODE_SUB: {
-        Register r1 = generate_expr(out, node->op.right);
-        Register r2 = generate_expr(out, node->op.left);
+        Register r1 = generate_expr(out, node->op.right, type);
+        Register r2 = generate_expr(out, node->op.left, type);
 
         emit_2(out, "subq", REG(r1), REG(r2));
 
@@ -373,8 +356,8 @@ Register generate_expr(FILE *out, ASTNode *node)
     }
 
     case NODE_MUL: {
-        Register r1 = generate_expr(out, node->op.right);
-        Register r2 = generate_expr(out, node->op.left);
+        Register r1 = generate_expr(out, node->op.right, type);
+        Register r2 = generate_expr(out, node->op.left, type);
 
         emit_2(out, "imulq", REG(r1), REG(r2));
 
@@ -384,8 +367,8 @@ Register generate_expr(FILE *out, ASTNode *node)
     }
 
     case NODE_DIV: {
-        Register r1 = generate_expr(out, node->op.right);
-        Register r2 = generate_expr(out, node->op.left);
+        Register r1 = generate_expr(out, node->op.right, type);
+        Register r2 = generate_expr(out, node->op.left, type);
 
         emit_2(out, "movq", REG(r1), REG(REG_EAX));
         emit_2(out, "movq", IMMEDIATE(0), REG(REG_EDX));
@@ -424,8 +407,8 @@ Register generate_expr(FILE *out, ASTNode *node)
     return r;
 }
 
-void generate_args(FILE *out, ASTNode *node, bool *used, unsigned long int *varcount,
-                   int *varoffset)
+void generate_args(FILE *out, ASTNode *node, bool *used,
+                   unsigned long int *varcount, int *varoffset)
 {
     Register varout = { .offset = node->var.offset, .reg = RBP };
 
@@ -486,7 +469,7 @@ void print_ast(ASTNode *node, int indent)
         break;
 
     case NODE_IDENTIFIER:
-        printf("IDENTIFIER\n");
+        printf("IDENTIFIER : %s\n", node->identifier);
         break;
 
     case NODE_ADD:
@@ -536,6 +519,7 @@ void print_ast(ASTNode *node, int indent)
         break;
     case NODE_VARIABLE:
         printf("VARIABLE\n");
+        print_vartype(node->var.type, indent + 1);
         print_ast(node->var.op.left, indent + 1); // variable
         print_ast(node->var.op.right, indent + 1); // expression
         break;

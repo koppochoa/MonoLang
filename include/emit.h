@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include "register.h"
+#include "Variables.h"
 typedef enum
 {
     OPERAND_IMMEDIATE,
@@ -19,6 +20,13 @@ struct Operand
     } value;
 };
 
+typedef enum {
+    MOV,
+    ADD,
+    SUB,
+    MULT,
+}Mnem;
+
 #define REG(a)((struct Operand){ .type = OPERAND_REGISTER, .value = { .reg = a}})
 
 
@@ -29,3 +37,7 @@ void emit_0(FILE *out, const char *op);
 void emit_1(FILE *out, const char *op, const struct Operand op1);
 void emit_2(FILE *out, const char *op, const struct Operand op1, const struct Operand op2);
 void emit_label(FILE *out, const char *label);
+
+char* get_mnem(Mnem mn);
+
+char *mov(VariableType type);
