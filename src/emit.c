@@ -1,62 +1,28 @@
 #include "emit.h"
 
-void emit_classic(FILE* out, const Register reg, VariableType type)
+void emit_mem(FILE *out, Register reg, int offset)
 {
-    
+    if (offset != 0)
+    {
+        if (offset < 0)
+        {
+            fprintf(out, "-%d(", -offset);
+        }
+        else
+            fprintf(out, "%d(", offset);
+    }
+    reg.size = INT64;
+    emit_register(out, reg);
+
+    if (offset != 0)
+    {
+        fprintf(out, ")");
+    }
 }
 
 void emit_register(FILE *out, const Register reg)
 {
-    if (reg.offset != 0)
-    {
-        if (reg.offset < 0)
-        {
-            fprintf(out, "-%d(", -reg.offset);
-        }
-        else
-            fprintf(out, "%d(", reg.offset);
-    }
-
-    switch (reg.reg)
-    {
-    case RAX:
-        fprintf(out, "%%rax");
-        break;
-    case RBX:
-        fprintf(out, "%%rbx");
-        break;
-    case RCX:
-        fprintf(out, "%%rcx");
-        break;
-    case RDX:
-        fprintf(out, "%%rdx");
-        break;
-    case RBP:
-        fprintf(out, "%%rbp");
-        break;
-    case RSP:
-        fprintf(out, "%%rsp");
-        break;
-    case RDI:
-        fprintf(out, "%%rdi");
-        break;
-    case RSI:
-        fprintf(out, "%%rsi");
-        break;
-    case R8:
-        fprintf(out, "%%r8");
-        break;
-    case R9:
-        fprintf(out, "%%r9");
-        break;
-    default:
-        break;
-    }
-
-    if (reg.offset != 0)
-    {
-        fprintf(out, ")");
-    }
+    fprintf(out, "%s", register_names[reg.size][reg.reg]);
 }
 
 void emit_operand(FILE *out, const struct Operand op)
@@ -69,30 +35,46 @@ void emit_operand(FILE *out, const struct Operand op)
     case OPERAND_REGISTER:
         emit_register(out, op.value.reg);
         break;
+    case OPERAND_MEMORY:
+        emit_mem(out, op.value.memory.reg, op.value.memory.offset);
+        break;
     default:
         break;
     }
 }
 
-void emit_0(FILE *out, const char *op)
+void emit_0(FILE *out, Mnem mn, VarSize type)
 {
+    char *op = get_mnem(mn, type);
     fprintf(out, "   %s\n", op);
+
+    if (op)
+        free(op);
 }
-void emit_1(FILE *out, const char *op, const struct Operand op1)
+void emit_1(FILE *out, Mnem mn, VarSize type, const struct Operand op1)
 {
+    char *op = get_mnem(mn, type);
     fprintf(out, "   %s ", op);
     emit_operand(out, op1);
     fprintf(out, "\n");
+
+    if (op)
+        free(op);
 }
-void emit_2(FILE *out, const char *op, const struct Operand op1,
+void emit_2(FILE *out, Mnem mn, VarSize type, const struct Operand op1,
             const struct Operand op2)
 {
+    char *op = get_mnem(mn, type);
+
     fprintf(out, "   %s ", op);
     emit_operand(out, op1);
     fprintf(out, ", ");
 
     emit_operand(out, op2);
     fprintf(out, "\n");
+
+    if (op)
+        free(op);
 }
 
 void emit_label(FILE *out, const char *label)
@@ -102,41 +84,146 @@ void emit_label(FILE *out, const char *label)
     fprintf(out, "%s:\n", label);
 }
 
-char *mov(VariableType type)
+void totype(char *buff, int i, VarSize type)
 {
-    char *res = malloc(sizeof(char) * 5); // XXX Y EOF
-    if (!res)
-        return NULL;
-
     switch (type)
 
     {
     case INT8:
-        strcpy(res, "movb\0");
+        buff[i] = 'b';
         break;
     case INT16:
-        strcpy(res, "movw\0");
+        buff[i] = 'w';
 
         break;
 
     case INT32:
-        strcpy(res, "movl\0");
+        buff[i] = 'l';
 
         break;
 
     case INT64:
-        strcpy(res, "movq\0");
+        buff[i] = 'q';
+
         break;
     }
+}
+
+char *mnemonic(const char *name, VarSize type)
+{
+    size_t len = strlen(name);
+    char *res = malloc(len + 2); // suffixe + '\0'
+    if (!res)
+        return NULL;
+
+    memcpy(res, name, len + 1);
+    totype(res, len, type);
+
+    res[len + 1] = '\0';
 
     return res;
 }
 
-char* get_mnem(Mnem mn, VariableType type)
+char *mov(VarSize type)
+{
+    return mnemonic("mov", type);
+}
+
+char *add(VarSize type)
+{
+    return mnemonic("add", type);
+}
+
+char *sub(VarSize type)
+{
+    return mnemonic("sub", type);
+}
+
+char *neg(VarSize type)
+{
+    return mnemonic("neg", type);
+}
+
+char *mul(VarSize type)
+{
+    return mnemonic("imul", type);
+}
+
+char *divi(VarSize type)
+{
+    return mnemonic("div", type);
+}
+
+char *push(VarSize type)
+{
+    return mnemonic("push", type);
+}
+
+char *leave(VarSize type)
+{
+    size_t len = strlen("leave");
+    char *res = malloc(len + 1); // suffixe + '\0'
+    if (!res)
+        return NULL;
+
+    memcpy(res, "leave", len);
+    res[len] = '\0';
+
+
+    return res;
+}
+
+char *ret(VarSize type)
+{
+    size_t len = strlen("ret");
+    char *res = malloc(len + 1); // suffixe + '\0'
+    if (!res)
+        return NULL;
+
+    memcpy(res, "ret", len);
+    res[len] = '\0';
+
+
+    return res;
+}
+
+char *syscall(VarSize type)
+{
+    size_t len = strlen("syscall");
+    char *res = malloc(len + 1); // suffixe + '\0'
+    if (!res)
+        return NULL;
+
+    memcpy(res, "syscall", len);
+    res[len] = '\0';
+
+
+    return res;
+}
+
+char *get_mnem(Mnem mn, VarSize type)
 {
     switch (mn)
     {
+    case SYSCALL:
+        return syscall(type);
     case MOV:
         return mov(type);
+    case ADD:
+        return add(type);
+    case SUB:
+        return sub(type);
+    case MUL:
+        return mul(type);
+    case DIV:
+        return divi(type);
+    case NEG:
+        return neg(type);
+    case PUSH:
+        return push(type);
+    case LEAVE:
+        return leave(type);
+    case RET:
+        return ret(type);
     }
 }

@@ -82,7 +82,7 @@ typedef struct ASTNode
         {
             struct op op;
             int offset;
-            VariableType type;
+            VarSize type;
         } var;
 
         struct varcall
@@ -93,7 +93,7 @@ typedef struct ASTNode
         struct retst
         {
             struct ASTNode *expr;
-            VariableType type;
+            VarSize size;
         } retst;
 
         struct unary
@@ -112,6 +112,7 @@ typedef struct ASTNode
             int args_size;
             Table_Manager *tm;
             bool used[ARGUMENTS_REG_COUNT];
+            VarSize type;
     } function;
     };
 
@@ -121,7 +122,7 @@ ASTNode *create_number_node(int value);
 ASTNode *create_op_node(NodeType type, ASTNode *left, ASTNode *right);
 double evaluate(ASTNode *node, Table_Manager *tm);
 void generate_code(FILE *out, ASTNode *node, Table_Manager *tm);
-Register generate_expr(FILE* out, ASTNode* node, VariableType type);
+Register generate_expr(FILE* out, ASTNode* node, VarSize type);
 void generate_args(FILE* out, ASTNode* node, bool* used,unsigned long int* varcount, int* varoffset);
 void free_ast(ASTNode *node);
 void print_ast(ASTNode *node, int indent);

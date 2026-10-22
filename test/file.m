@@ -1,5 +1,5 @@
 
-fn main(){
+fn main(): void{
 
     #void
     #void* -> 64
@@ -7,5 +7,5 @@ fn main(){
     int64 b = 10;
     #int8 c = a + b;
 
-    #return 0;
+    return a;
 }

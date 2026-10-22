@@ -22,6 +22,7 @@ typedef enum
     ASSIGN,
     SEMICOLON,
     COMMA,
+    COLON,
 
     FUNCTION_DECL,
     FUNCTION_NAME,
@@ -72,8 +73,7 @@ typedef struct
         int value_int;
 
         union variable {
-            // int value;
-            VariableType type;   
+            VarSize type;   
         }variable;
 
         double value_float;

@@ -17,7 +17,11 @@ main:
    movq $42, %rax
 #VAR DEF
    movq %rax, -8(%rbp)
-   
    movq $10, %rax
 #VAR DEF
    movq %rax, -16(%rbp)
+#VAR USE
+   movq -8(%rbp), %rax
+   movb %rax, %rax
+   leave
+   ret

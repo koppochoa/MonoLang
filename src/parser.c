@@ -129,7 +129,7 @@ ASTNode *parse_factor(Token *current_token, Lexer *lexer, Table_Manager *tm)
     else if (current_token->tokentype
              == VARTYPE) // schem <vartype> <identifier> <assign> <value>
     {
-        VariableType type = current_token->variable.type;
+        VarSize type = current_token->variable.type;
 
         *current_token = get_next_token(lexer);
 
@@ -300,7 +300,7 @@ ASTNode *parse_function(Token *current_token, Lexer *lexer)
 
         *current_token = get_next_token(lexer);
         printf("tokens fun\n");
-        while (current_token->tokentype != LBRACE)
+        while (current_token->tokentype != LPARENTHESIS)
         {
             print_token(*current_token);
             *current_token = get_next_token(lexer);
@@ -333,6 +333,22 @@ ASTNode *parse_function(Token *current_token, Lexer *lexer)
 
         print_variables(func->function.tm);
 
+        while (current_token->tokentype != LBRACE)
+        {
+            if(current_token->tokentype == COLON)
+            {
+                *current_token = get_next_token(lexer);
+
+                if(current_token->tokentype == VARTYPE)
+                {
+                    func->function.type = current_token->variable.type;
+                }
+            }
+
+            *current_token = get_next_token(lexer);
+        }
+        
+
         if (current_token->tokentype != LBRACE)
         {
             // err no opening brace
@@ -355,7 +371,6 @@ ASTNode *parse_function(Token *current_token, Lexer *lexer)
 
                 // func->function.tm->offset += sizeof(long);
                 func->function.tm->offset += sizeofvartype(stmt->var.type);
-
             }
 
             ASTList *new = malloc(sizeof(ASTList));

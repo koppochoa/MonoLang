@@ -48,7 +48,7 @@ void print_variables(Table_Manager *tm)
     }
 }
 
-size_t sizeofvartype(VariableType type)
+size_t sizeofvartype(VarSize type)
 {
     switch (type)
     {
@@ -66,7 +66,7 @@ size_t sizeofvartype(VariableType type)
     }
 }
 
-void print_vartype(VariableType type, int indent)
+void print_vartype(VarSize type, int indent)
 {
     for (int i = 0; i < indent; ++i)
         printf("  ");
@@ -84,6 +84,9 @@ void print_vartype(VariableType type, int indent)
         break;
     case INT64:
         printf("INT64\n");
+        break;
+    case VOID:
+        printf("VOID\n");
         break;
     default:
         break;

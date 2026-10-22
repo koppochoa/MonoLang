@@ -82,6 +82,9 @@ void print_token(Token token)
     case COMMA:
         printf("COMMA\n");
         break;
+    case COLON:
+        printf("COLON(:)\n");
+        break;
 
     case INVALID:
         printf("INVALID TOKEN\n");
@@ -179,6 +182,10 @@ Token lex_operators(Lexer *lexer)
         token.tokentype = RBRACE;
         lexer->position++;
         return token;
+    case ':':
+        token.tokentype = COLON;
+        lexer->position++;
+        return token;
     default:
         lexer->position++;
         print_error_at_position(lexer->data, lexer->position,
@@ -213,6 +220,14 @@ Token lex_identifier(Lexer *lexer)
     if (strcmp(ident, "return") == 0)
     {
         token.tokentype = RETURN_STATMENT;
+        // potentiel free
+        return token;
+    }
+
+    if (strcmp(ident, "void") == 0)
+    {
+        token.tokentype = VARTYPE;
+        token.variable.type = VOID;
         // potentiel free
         return token;
     }

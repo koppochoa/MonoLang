@@ -10,9 +10,10 @@ typedef enum
     INT8,
     INT16,
     INT32,
-    INT64
+    INT64,
+    VOID,
 
-} VariableType;
+} VarSize;
 
 typedef struct
 {
@@ -36,5 +37,5 @@ void init_table_manager(Table_Manager *tm);
 void set_variable(Table_Manager *tm, const char *name, int offset);
 Variable *lookupvariable(Table_Manager *tm, char *name);
 void print_variables(Table_Manager *tm);
-void print_vartype(VariableType type, int indent);
-size_t sizeofvartype(VariableType type);
+void print_vartype(VarSize type, int indent);
+size_t sizeofvartype(VarSize type);
