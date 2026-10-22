@@ -20,7 +20,7 @@ typedef struct
     char *name;
     int offset;
     bool created;
-
+    VarSize type;
 } Variable;
 
 #define MAX_VARIABLES 100
@@ -34,7 +34,8 @@ typedef struct
 
 void init_table_manager(Table_Manager *tm);
 
-void set_variable(Table_Manager *tm, const char *name, int offset);
+void set_variable(Table_Manager *tm, const char *name, int offset,
+                  VarSize type);
 Variable *lookupvariable(Table_Manager *tm, char *name);
 void print_variables(Table_Manager *tm);
 void print_vartype(VarSize type, int indent);

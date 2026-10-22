@@ -13,15 +13,19 @@ main:
    movq %rsp, %rbp
    subq $24, %rsp
 #START ARGUMENTS INITIALIZATION
+   movl %edi, -8(%rbp)
 #END ARGUMENTS INITIALIZATION
-   movq $42, %rax
+   movl $42, %eax
 #VAR DEF
-   movq %rax, -8(%rbp)
-   movq $10, %rax
+   movl %eax, -16(%rbp)
+   movl $10, %eax
 #VAR DEF
-   movq %rax, -16(%rbp)
+   movl %eax, -20(%rbp)
 #VAR USE
-   movq -8(%rbp), %rax
-   movb %rax, %rax
+   movl -16(%rbp), %eax
+#VAR USE
+   movl -20(%rbp), %ebx
+   addl %ebx, %eax
+   movl %eax, %eax
    leave
    ret

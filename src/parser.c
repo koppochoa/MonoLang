@@ -123,6 +123,7 @@ ASTNode *parse_factor(Token *current_token, Lexer *lexer, Table_Manager *tm)
             ASTNode *res = malloc(sizeof(ASTNode));
             res->type = NODE_VARIABLE_CALL;
             res->varcall.offset = var->offset;
+            res->varcall.type = var->type;
             return res;
         }
     }
@@ -155,7 +156,8 @@ ASTNode *parse_factor(Token *current_token, Lexer *lexer, Table_Manager *tm)
                 assign->var.op.left->type = NODE_IDENTIFIER;
                 assign->var.op.left->identifier = name;
 
-                set_variable(tm, assign->op.left->identifier, -tm->offset);
+                set_variable(tm, assign->op.left->identifier, -tm->offset,
+                             type);
 
                 return assign;
             }
@@ -298,56 +300,70 @@ ASTNode *parse_function(Token *current_token, Lexer *lexer)
         func->function.name->identifier = current_token->function.name;
         func->function.args_size = 0;
 
+
         *current_token = get_next_token(lexer);
+            print_token(*current_token);
+
         printf("tokens fun\n");
-        while (current_token->tokentype != LPARENTHESIS)
+        while (current_token->tokentype != RPARENTHESIS)
         {
             print_token(*current_token);
             *current_token = get_next_token(lexer);
 
-            if (current_token->tokentype == IDENTIFIER)
+            if (current_token->tokentype == VARTYPE)
             {
-                ASTNode *assign = malloc(sizeof(ASTNode));
-                assign->type = NODE_VARIABLE;
-                assign->var.offset = -func->function.tm->offset;
+                VarSize vs = current_token->variable.type;
+                *current_token = get_next_token(lexer);
 
-                assign->var.op.left = malloc(sizeof(ASTNode));
-                assign->var.op.left->type = NODE_IDENTIFIER;
-                assign->var.op.left->identifier = current_token->identifier;
+                if (current_token->tokentype == IDENTIFIER)
+                {
+                    ASTNode *assign = malloc(sizeof(ASTNode));
+                    assign->type = NODE_VARIABLE;
 
-                assign->var.op.right = NULL;
+                    assign->var.offset = -func->function.tm->offset;
+                    assign->var.op.left = malloc(sizeof(ASTNode));
+                    assign->var.op.left->type = NODE_IDENTIFIER;
+                    assign->var.op.left->identifier = current_token->identifier;
+                    assign->var.type = vs; // to change
 
-                ASTList *new = malloc(sizeof(ASTList));
-                new->statement = assign;
-                new->next = NULL;
+                    assign->var.op.right = NULL;
 
-                *args_current = new;
-                args_current = &(new->next);
+                    ASTList *new = malloc(sizeof(ASTList));
+                    new->statement = assign;
+                    new->next = NULL;
 
-                set_variable(func->function.tm, assign->op.left->identifier,
-                             func->function.tm->offset);
+                    *args_current = new;
+                    args_current = &(new->next);
 
-                func->function.tm->offset += sizeof(long);
+                    set_variable(func->function.tm, assign->op.left->identifier,
+                                 func->function.tm->offset, INT64);
+
+                    func->function.tm->offset += sizeof(long);
+                }
             }
         }
 
         print_variables(func->function.tm);
 
+        // void is default return type
+        func->function.rettype = VOID;
+
         while (current_token->tokentype != LBRACE)
         {
-            if(current_token->tokentype == COLON)
+            if (current_token->tokentype == COLON)
             {
                 *current_token = get_next_token(lexer);
 
-                if(current_token->tokentype == VARTYPE)
+                if (current_token->tokentype == VARTYPE)
                 {
-                    func->function.type = current_token->variable.type;
+                    printf("        rettt succ found\n");
+                    print_vartype(current_token->variable.type, 0);
+                    func->function.rettype = current_token->variable.type;
                 }
             }
 
             *current_token = get_next_token(lexer);
         }
-        
 
         if (current_token->tokentype != LBRACE)
         {
@@ -373,6 +389,11 @@ ASTNode *parse_function(Token *current_token, Lexer *lexer)
                 func->function.tm->offset += sizeofvartype(stmt->var.type);
             }
 
+            if (stmt->type == NODE_RETURN_STATMENT)
+            {
+                stmt->retst.type = func->function.rettype;
+            }
+
             ASTList *new = malloc(sizeof(ASTList));
             new->statement = stmt;
             new->next = NULL;
@@ -388,8 +409,6 @@ ASTNode *parse_function(Token *current_token, Lexer *lexer)
 
             *current_token = get_next_token(lexer);
         }
-
-        // print_variables(func->function.tm);
 
         res = func;
     }

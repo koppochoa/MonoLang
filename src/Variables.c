@@ -7,11 +7,13 @@ void init_table_manager(Table_Manager *tm)
     tm->offset = 0;
 }
 
-void set_variable(Table_Manager *tm, const char *name, int offset)
+void set_variable(Table_Manager *tm, const char *name, int offset, VarSize type)
 {
     tm->symbol_table[tm->variable_count].name = strdup(name);
     tm->symbol_table[tm->variable_count].offset = offset;
     tm->symbol_table[tm->variable_count].created = false;
+    tm->symbol_table[tm->variable_count].type = type;
+
     tm->variable_count++;
 }
 
@@ -60,6 +62,8 @@ size_t sizeofvartype(VarSize type)
         return 4;
     case INT64:
         return 8;
+    case VOID:
+        return 0;
     default:
         return 0;
         break;
