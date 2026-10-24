@@ -6,6 +6,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "std.h"
+#include "codegen.h"
 
 bool has_main = false;
 
@@ -62,7 +63,7 @@ int main(int argc, char **argv)
 
     Token current_token = get_next_token(&lexer);
 
-    debug_lexer(&lexer);
+    // debug_lexer(&lexer);
 
     ASTNode *root = parse_program(&current_token, &lexer);
 
@@ -72,7 +73,7 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    generate_code(out, root, NULL);
+    generate_code(out, root, root->program.ft);
 
 
     print_ast(root, 0);

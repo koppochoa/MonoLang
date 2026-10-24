@@ -12,7 +12,7 @@ void emit_mem(FILE *out, Register reg, int offset)
             fprintf(out, "%d(", offset);
     }
     reg.size = INT64;
-    emit_register(out, reg);
+    emit_register(out, reg, INT64);
 
     if (offset != 0)
     {
@@ -23,12 +23,12 @@ void emit_mem(FILE *out, Register reg, int offset)
 
 
 
-void emit_register(FILE *out, const Register reg)
+void emit_register(FILE *out, const Register reg, VarSize size)
 {
-    fprintf(out, "%s", register_names[reg.size][reg.reg]);
+    fprintf(out, "%s", register_names[size][reg.reg]);
 }
 
-void emit_operand(FILE *out, const struct Operand op)
+void emit_operand(FILE *out, const struct Operand op, VarSize size)
 {
     switch (op.type)
     {
@@ -36,7 +36,7 @@ void emit_operand(FILE *out, const struct Operand op)
         fprintf(out, "$%ld", op.value.immediate);
         break;
     case OPERAND_REGISTER:
-        emit_register(out, op.value.reg);
+        emit_register(out, op.value.reg, size);
         break;
     case OPERAND_MEMORY:
         emit_mem(out, op.value.memory.reg, op.value.memory.offset);
@@ -61,7 +61,7 @@ void emit_1(FILE *out, Mnem mn, VarSize type, const struct Operand op1)
 {
     char *op = get_mnem(mn, type);
     fprintf(out, "   %s ", op);
-    emit_operand(out, op1);
+    emit_operand(out, op1, type);
     fprintf(out, "\n");
 
     if (op)
@@ -73,10 +73,10 @@ void emit_2(FILE *out, Mnem mn, VarSize type, const struct Operand op1,
     char *op = get_mnem(mn, type);
 
     fprintf(out, "   %s ", op);
-    emit_operand(out, op1);
+    emit_operand(out, op1,type);
     fprintf(out, ", ");
 
-    emit_operand(out, op2);
+    emit_operand(out, op2,type);
     fprintf(out, "\n");
 
     if (op)

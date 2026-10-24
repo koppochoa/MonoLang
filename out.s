@@ -24,30 +24,44 @@ add:
    movl %eax, %eax
    leave
    ret
-
 .globl main
 .type main, @function
 main:
    pushq %rbp
    movq %rsp, %rbp
-   subq $28, %rsp
+   subq $32, %rsp
 #START ARGUMENTS INITIALIZATION
    movl %edi, -8(%rbp)
 #END ARGUMENTS INITIALIZATION
+#VAR DEF
    movl $52, %ebx
-#VAR DEF
    movl %ebx, -16(%rbp)
+#VAR DEF
    movl $10, %ebx
-#VAR DEF
    movl %ebx, -20(%rbp)
-#FUNC CALL
-   movl $10, %edi
-   movl $1, %esi
-   call add
 #VAR DEF
+#FUNC CALL
+   movl $5, %ebx
+   movl %ebx, %edi
+   movl $10, %ecx
+   movl %ecx, %esi
+   call add
    movl %eax, -24(%rbp)
+#VAR DEF
+#FUNC CALL
 #VAR USE
-   movl -24(%rbp), %ebx
-   movl %ebx, %eax
+   movl -16(%rbp), %eax
+   movl %eax, %edi
+#VAR USE
+   movl -20(%rbp), %edx
+   movl %edx, %esi
+   call add
+   movl %eax, -28(%rbp)
+#VAR USE
+   movl -28(%rbp), %eax
+#VAR USE
+   movl -24(%rbp), %esi
+   addl %esi, %eax
+   movl %eax, %eax
    leave
    ret

@@ -107,16 +107,17 @@ typedef struct ASTNode
             struct ASTList *list;
             Function_Table* ft;
         } program;
-        struct function
-        {
-            char *name;
-            struct ASTList *body;
-            struct ASTList *args;
-            int args_size;
-            Table_Manager *tm;
-            bool used[ARGUMENTS_REG_COUNT];
-            VarSize rettype;
-        } function;
+        // struct function
+        // {
+        //     char *name;
+        //     struct ASTList *body;
+        //     struct ASTList *args;
+        //     int args_size;
+        //     Table_Manager *tm;
+        //     bool used[ARGUMENTS_REG_COUNT];
+        //     VarSize rettype;
+        // } function;
+        Function function;
         struct function_call
         {   
             char* name;

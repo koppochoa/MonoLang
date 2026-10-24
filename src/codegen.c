@@ -1,7 +1,7 @@
 
 #include "codegen.h"
 
-void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
+void generate_code(FILE *out, ASTNode *node, Function_Table *ft)
 {
     switch (node->type)
     {
@@ -9,7 +9,7 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
         ASTList *current = node->program.list;
         while (current)
         {
-            generate_code(out, current->statement, tm);
+            generate_code(out, current->statement, ft);
             current = current->next;
         }
 
@@ -43,13 +43,24 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
         ASTList *current = node->function.body;
         while (current)
         {
-            generate_code(out, current->statement, node->function.tm);
+            // generate_code(out, current->statement, node->function.tm);
+            generate_function(out, current->statement, ft, node->function.tm);
             current = current->next;
         }
 
         break;
     }
 
+    default:
+        break;
+    }
+}
+
+void generate_function(FILE *out, ASTNode *node, Function_Table *ft,
+                       Table_Manager *tm)
+{
+    switch (node->type)
+    {
     case NODE_VARIABLE: {
         if (!tm)
         {
@@ -66,18 +77,16 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
         }
         if (var->created == false)
         {
-            Register reg =
-                generate_expr(out, node->var.op.right, node->var.type);
+            fprintf(out, "#VAR DEF\n");
 
-            Register dreg = { .reg = RBP };
+            Register reg =
+                generate_expr(out, node->var.op.right, ft, node->var.type);
 
             const struct Operand dest = {
                 .type = OPERAND_MEMORY,
                 .value = { .memory = { .offset = node->var.offset,
                                        .reg = RBP } }
             };
-
-            fprintf(out, "#VAR DEF\n");
 
             emit_2(out, MOV, node->var.type, REG(reg), dest);
 
@@ -91,7 +100,8 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
         break;
     }
     case NODE_RETURN_STATMENT: {
-        Register reg = generate_expr(out, node->retst.expr, node->retst.type);
+        Register reg =
+            generate_expr(out, node->retst.expr, ft, node->retst.type);
 
         Register out_rax = { .reg = RAX, .size = node->retst.type };
 
@@ -102,13 +112,11 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
 
         break;
     }
-
-    default:
-        break;
     }
 }
 
-Register generate_expr(FILE *out, ASTNode *node, VarSize type)
+Register generate_expr(FILE *out, ASTNode *node, Function_Table *ft,
+                       VarSize type)
 {
     switch (node->type)
     {
@@ -124,12 +132,12 @@ Register generate_expr(FILE *out, ASTNode *node, VarSize type)
     }
 
     case NODE_UNARY_PLUS: {
-        Register reg = generate_expr(out, node->unary.operand, type);
+        Register reg = generate_expr(out, node->unary.operand, ft, type);
         return reg;
     }
 
     case NODE_UNARY_MINUS: {
-        Register reg = generate_expr(out, node->unary.operand, type);
+        Register reg = generate_expr(out, node->unary.operand, ft, type);
 
         // emit_1(out, "negq", REG(reg));
         emit_1(out, NEG, type, REG(reg));
@@ -138,8 +146,8 @@ Register generate_expr(FILE *out, ASTNode *node, VarSize type)
     }
 
     case NODE_ADD: {
-        Register r1 = generate_expr(out, node->op.right, type);
-        Register r2 = generate_expr(out, node->op.left, type);
+        Register r1 = generate_expr(out, node->op.right, ft, type);
+        Register r2 = generate_expr(out, node->op.left, ft, type);
 
         emit_2(out, ADD, type, REG(r2), REG(r1));
 
@@ -149,8 +157,8 @@ Register generate_expr(FILE *out, ASTNode *node, VarSize type)
     }
 
     case NODE_SUB: {
-        Register r1 = generate_expr(out, node->op.right, type);
-        Register r2 = generate_expr(out, node->op.left, type);
+        Register r1 = generate_expr(out, node->op.right, ft, type);
+        Register r2 = generate_expr(out, node->op.left, ft, type);
 
         emit_2(out, SUB, type, REG(r1), REG(r2));
 
@@ -160,8 +168,8 @@ Register generate_expr(FILE *out, ASTNode *node, VarSize type)
     }
 
     case NODE_MUL: {
-        Register r1 = generate_expr(out, node->op.right, type);
-        Register r2 = generate_expr(out, node->op.left, type);
+        Register r1 = generate_expr(out, node->op.right, ft, type);
+        Register r2 = generate_expr(out, node->op.left, ft, type);
 
         emit_2(out, MUL, type, REG(r1), REG(r2));
 
@@ -171,8 +179,8 @@ Register generate_expr(FILE *out, ASTNode *node, VarSize type)
     }
 
     case NODE_DIV: {
-        Register r1 = generate_expr(out, node->op.right, type);
-        Register r2 = generate_expr(out, node->op.left, type);
+        Register r1 = generate_expr(out, node->op.right, ft, type);
+        Register r2 = generate_expr(out, node->op.left, ft, type);
 
         emit_2(out, MOV, type, REG(r1), REG(REG_EAX));
         emit_2(out, MOV, type, IMMEDIATE(0), REG(REG_EDX));
@@ -191,14 +199,35 @@ Register generate_expr(FILE *out, ASTNode *node, VarSize type)
         struct Operand op = { .type = OPERAND_LABEL,
                               .value = { .label = node->function_call.name } };
 
-        ASTList *current = node->function_call.args;
-        while (current)
+        Function *func = lookupfunction(ft, node->function_call.name);
+        if (!func)
         {
-            generate_params(out, current->statement, node->function_call.used);
-            current = current->next;
+            // no func err
+        }
+
+        ASTList *current_parameter = node->function_call.args;
+        ASTList *current_function_parameter_slot = func->args;
+
+        int param_idx = 0;
+
+        while (current_parameter && current_function_parameter_slot)
+        {
+            VarSize slot_type =
+                current_function_parameter_slot->statement->var.type;
+
+            generate_params(out, current_parameter->statement,
+                            node->function_call.used, ft, slot_type,
+                            &param_idx);
+
+            current_parameter = current_parameter->next;
+            current_function_parameter_slot =
+                current_function_parameter_slot->next;
         }
 
         fprintf(out, "   call %s\n", node->function_call.name);
+
+        Register res = {.reg = RAX};
+        return res;
 
         break;
     }
@@ -228,13 +257,14 @@ Register generate_expr(FILE *out, ASTNode *node, VarSize type)
     return r;
 }
 
-void generate_params(FILE *out, ASTNode *node, bool *used)
+void generate_params(FILE *out, ASTNode *node, bool *used, Function_Table *ft,
+                     VarSize type, int *param_idx)
 {
-    const struct Operand vout = {
-        .type = OPERAND_MEMORY,
-        .value = { .memory = { .offset = node->var.offset,
-                               .reg = { .reg = RBP, .size = INT64 } } }
-    };
+    // const struct Operand vout = {
+    //     .type = OPERAND_MEMORY,
+    //     .value = { .memory = { .offset = node->var.offset,
+    //                            .reg = { .reg = RBP, .size = INT64 } } }
+    // };
 
     // if (*varcount >= ARGUMENTS_REG_COUNT)
     // {
@@ -255,13 +285,17 @@ void generate_params(FILE *out, ASTNode *node, bool *used)
     //     return;
     // }
 
+    printf("        Creating params\n");
+
     Register reg = find_free_reg_from(used);
-    reg.size = node->var.type;
+    reg.size = type;
 
-    // Register val = generate_expr(out, node, );
+    Register val = generate_expr(out, node, ft, type);
 
-    // emit_2(out, MOV, node->var.type, , REG(reg));
+    use_reg_from(used, *param_idx);
+    *param_idx++;
 
+    emit_2(out, MOV, type, REG(val), REG(reg));
 }
 
 void generate_args(FILE *out, ASTNode *node, bool *used,

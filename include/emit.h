@@ -53,8 +53,8 @@ typedef enum
 
 
 void emit_mem(FILE *out, Register reg, int offset);
-void emit_register(FILE *out, const Register reg);
-void emit_operand(FILE *out, const struct Operand op);
+void emit_register(FILE *out, const Register reg,VarSize size);
+void emit_operand(FILE *out, const struct Operand op,VarSize type);
 void emit_0(FILE *out, Mnem mn, VarSize type);
 void emit_1(FILE *out, Mnem mn, VarSize type, const struct Operand op1);
 void emit_2(FILE *out, Mnem mn, VarSize type, const struct Operand op1,

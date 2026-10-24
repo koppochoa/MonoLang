@@ -95,7 +95,6 @@ ASTNode *parse_factor(Token *current_token, Lexer *lexer, Function_Table *ft,
 
             *current_token = get_next_token(lexer);
 
-            print_ast(func_node, 0);
 
             return func_node;
         }
@@ -123,7 +122,6 @@ ASTNode *parse_factor(Token *current_token, Lexer *lexer, Function_Table *ft,
                 *current_token = get_next_token(lexer);
                 ASTNode *expr = parse_expr(current_token, lexer, ft, tm);
 
-                print_ast(expr, 0);
 
                 ASTNode *assign = malloc(sizeof(ASTNode));
                 assign->type = NODE_VARIABLE;
@@ -327,7 +325,7 @@ ASTNode *parse_function(Token *current_token, Lexer *lexer, Function_Table *ft)
             has_main = true;
         }
 
-        set_function(ft, fname);
+        set_function(ft, &func->function);
 
         while (current_token->tokentype != RBRACE)
         {

@@ -60,10 +60,10 @@ typedef enum
 
 } TokenType;
 
-typedef struct Function
+typedef struct
 {
     char *name;
-} Function;
+} Tok_Function;
 
 typedef struct
 {
@@ -78,7 +78,7 @@ typedef struct
 
         double value_float;
         char *identifier;
-        struct Function function;
+        Tok_Function function;
     };
 } Token;
 
