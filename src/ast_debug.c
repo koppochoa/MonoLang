@@ -80,9 +80,9 @@ void print_ast(ASTNode *node, int indent)
         break;
 
     case NODE_FUNCTION_CALL:
-        printf("FUNCTION_CALL\n");
+        printf("FUNCTION_CALL(%s)\n", node->function_call.name);
         {
-            ASTList *current = node->function.body;
+            ASTList *current = node->function_call.args;
             while (current)
             {
                 print_ast(current->statement, indent + 1);
@@ -92,10 +92,8 @@ void print_ast(ASTNode *node, int indent)
         break;
 
     case NODE_FUNCTION_DECL: {
-        printf("FUNCTION DECL\n");
+        printf("FUNCTION DECL(%s)\n", node->function.name);
         print_vartype(node->function.rettype, indent + 1);
-
-        print_ast(node->function.name, indent + 1);
 
         ASTList *current = node->function.body;
         while (current)
@@ -121,6 +119,7 @@ void print_ast(ASTNode *node, int indent)
         print_vartype(node->retst.type, indent + 1);
         break;
     }
+
 
     default:
         printf("UNKNOWN NODE TYPE\n");

@@ -1,13 +1,14 @@
 #pragma once
 
-#include <stdlib.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include "Variables.h"
 #include "emit.h"
 #include "lexer.h"
-#include "std.h"
 #include "register.h"
+#include "std.h"
+#include "Function.h"
 
 extern bool has_main;
 
@@ -104,23 +105,32 @@ typedef struct ASTNode
         struct program
         {
             struct ASTList *list;
+            Function_Table* ft;
         } program;
         struct function
         {
-            struct ASTNode *name;
+            char *name;
             struct ASTList *body;
             struct ASTList *args;
             int args_size;
             Table_Manager *tm;
             bool used[ARGUMENTS_REG_COUNT];
             VarSize rettype;
-    } function;
+        } function;
+        struct function_call
+        {   
+            char* name;
+            struct ASTList *args;
+            bool used[ARGUMENTS_REG_COUNT];
+        }function_call;
     };
 
 } ASTNode;
 
 ASTNode *create_number_node(int value);
 ASTNode *create_op_node(NodeType type, ASTNode *left, ASTNode *right);
+ASTNode *create_func_node(char* fname);
+ASTNode *create_varcall_node(int offset, VarSize type);
 
 void free_ast(ASTNode *node);
 void print_ast(ASTNode *node, int indent);

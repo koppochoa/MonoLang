@@ -69,8 +69,6 @@ typedef struct
 #define REG_ECX ((Register){ .reg = RCX, .size = INT32})
 #define REG_EDX ((Register){ .reg = RDX, .size = INT32})
 
-
-
 extern RegisterManager rm;
 
 Register find_free_reg();

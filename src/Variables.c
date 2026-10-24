@@ -17,18 +17,7 @@ void set_variable(Table_Manager *tm, const char *name, int offset, VarSize type)
     tm->variable_count++;
 }
 
-// double get_variable(Table_Manager *tm, const char *name)
-// {
-//     for (int i = 0; i < tm->variable_count; i++)
-//     {
-//         if (strcmp(tm->symbol_table[i].name, name) == 0)
-//         {
-//             return tm->symbol_table[i].value;
-//         }
-//     }
-//     printf("Erreur : variable '%s' non définie\n", name);
-//     exit(1);
-// }
+
 
 Variable *lookupvariable(Table_Manager *tm, char *name)
 {

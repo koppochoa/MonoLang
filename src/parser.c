@@ -6,13 +6,14 @@
 #include "AST.h"
 #include "utils.h"
 
-ASTNode *parse_factor(Token *current_token, Lexer *lexer, Table_Manager *tm)
+ASTNode *parse_factor(Token *current_token, Lexer *lexer, Function_Table *ft,
+                      Table_Manager *tm)
 {
     if (current_token->tokentype == MINUS || current_token->tokentype == PLUS)
     {
         TokenType op = current_token->tokentype;
         *current_token = get_next_token(lexer);
-        ASTNode *operand = parse_factor(current_token, lexer, tm);
+        ASTNode *operand = parse_factor(current_token, lexer, ft, tm);
 
         ASTNode *node = malloc(sizeof(ASTNode));
         node->type = (op == MINUS) ? NODE_UNARY_MINUS : NODE_UNARY_PLUS;
@@ -21,10 +22,9 @@ ASTNode *parse_factor(Token *current_token, Lexer *lexer, Table_Manager *tm)
     }
     else if (current_token->tokentype == NUMBER)
     {
-        ASTNode *node = malloc(sizeof(ASTNode));
-        node->type = NODE_NUMBER;
-        node->value_int = current_token->value_int;
+        ASTNode *node = create_number_node(current_token->value_int);
         *current_token = get_next_token(lexer);
+
         return node;
     }
     else if (current_token->tokentype == FLOAT)
@@ -38,7 +38,7 @@ ASTNode *parse_factor(Token *current_token, Lexer *lexer, Table_Manager *tm)
     else if (current_token->tokentype == LPARENTHESIS)
     {
         *current_token = get_next_token(lexer);
-        ASTNode *node = parse_expr(current_token, lexer, tm);
+        ASTNode *node = parse_expr(current_token, lexer, ft, tm);
 
         if (current_token->tokentype != RPARENTHESIS)
         {
@@ -49,64 +49,6 @@ ASTNode *parse_factor(Token *current_token, Lexer *lexer, Table_Manager *tm)
         *current_token = get_next_token(lexer); // consomme ')'
         return node;
     }
-    // else if (current_token->tokentype == IDENTIFIER)
-    // {
-    //     char *name = strdup(current_token->identifier);
-    //     *current_token = get_next_token(lexer);
-
-    //     if (current_token->tokentype == ASSIGN)
-    //     {
-    //         *current_token = get_next_token(lexer);
-    //         ASTNode *expr = parse_expr(current_token, lexer, tm);
-
-    //         ASTNode *assign = malloc(sizeof(ASTNode));
-    //         assign->type = NODE_VARIABLE;
-    //         assign->var.offset = -tm->offset;
-
-    //         assign->var.op.left = malloc(sizeof(ASTNode));
-    //         assign->var.op.left->type = NODE_IDENTIFIER;
-    //         assign->var.op.left->identifier = name;
-
-    //         assign->var.op.right = expr;
-
-    //         set_variable(tm, assign->op.left->identifier, -tm->offset);
-
-    //         return assign;
-    //     }
-    //     else if (current_token->tokentype == LPARENTHESIS)
-    //     {
-    //         *current_token = get_next_token(lexer); // consomme '('
-    //         struct ASTNode *func_call = malloc(sizeof(struct ASTNode));
-    //         func_call->type = NODE_FUNCTION_CALL;
-    //         func_call->function.name->identifier = name;
-    //         // func_call->function.args = parse_argument_list(current_token,
-    //         // lexer);
-
-    //         if (current_token->tokentype != RPARENTHESIS)
-    //         {
-    //             printf("Erreur : ')' attendu après les arguments\n");
-    //             exit(1);
-    //         }
-    //         *current_token = get_next_token(lexer); // consomme ')'
-    //         return func_call;
-    //     }
-    //     else
-    //     {
-    //         Variable *var = lookupvariable(tm, name);
-    //         if (var == NULL)
-    //         {
-    //             printf("Erreur : variable non existante\n");
-    //             exit(1);
-    //         }
-    //         else
-    //         {
-    //             ASTNode *res = malloc(sizeof(ASTNode));
-    //             res->type = NODE_VARIABLE_CALL;
-    //             res->varcall.offset = var->offset;
-    //             return res;
-    //         }
-    //     }
-    // }
     else if (current_token->tokentype == IDENTIFIER)
     {
         char *name = strdup(current_token->identifier);
@@ -115,15 +57,52 @@ ASTNode *parse_factor(Token *current_token, Lexer *lexer, Table_Manager *tm)
         Variable *var = lookupvariable(tm, name);
         if (var == NULL)
         {
-            printf("Erreur : variable non existante\n");
-            exit(1);
+            char *func = lookupfunction(ft, name);
+            if (func == NULL)
+            {
+                printf("Erreur : variable non existante\n");
+                exit(1);
+            }
+
+
+            ASTNode *func_node = malloc(sizeof(ASTNode));
+            func_node->type = NODE_FUNCTION_CALL;
+            func_node->function_call.name = name;
+            func_node->function_call.args = NULL;
+
+            ASTList **args_current = &(func_node->function_call.args);
+
+            *current_token = get_next_token(lexer);
+
+            print_token(*current_token);
+
+            while (current_token->tokentype != RPARENTHESIS)
+            {
+                ASTNode *var = parse_expr(current_token, lexer, ft, tm);
+
+                ASTList *new = malloc(sizeof(ASTList));
+                new->statement = var;
+                new->next = NULL;
+
+                *args_current = new;
+                args_current = &(new->next);
+
+                if (current_token->tokentype == COMMA)
+                {
+                    *current_token = get_next_token(lexer);
+                }
+            }
+
+            *current_token = get_next_token(lexer);
+
+            print_ast(func_node, 0);
+
+            return func_node;
         }
         else
         {
-            ASTNode *res = malloc(sizeof(ASTNode));
-            res->type = NODE_VARIABLE_CALL;
-            res->varcall.offset = var->offset;
-            res->varcall.type = var->type;
+            ASTNode *res = create_varcall_node(var->offset, var->type);
+
             return res;
         }
     }
@@ -142,7 +121,9 @@ ASTNode *parse_factor(Token *current_token, Lexer *lexer, Table_Manager *tm)
             if (current_token->tokentype == ASSIGN)
             {
                 *current_token = get_next_token(lexer);
-                ASTNode *expr = parse_expr(current_token, lexer, tm);
+                ASTNode *expr = parse_expr(current_token, lexer, ft, tm);
+
+                print_ast(expr, 0);
 
                 ASTNode *assign = malloc(sizeof(ASTNode));
                 assign->type = NODE_VARIABLE;
@@ -168,7 +149,7 @@ ASTNode *parse_factor(Token *current_token, Lexer *lexer, Table_Manager *tm)
     else if (current_token->tokentype == RETURN_STATMENT)
     {
         *current_token = get_next_token(lexer);
-        struct ASTNode *retval = parse_expr(current_token, lexer, tm);
+        struct ASTNode *retval = parse_expr(current_token, lexer, ft, tm);
 
         struct ASTNode *node = malloc(sizeof(ASTNode));
         node->type = NODE_RETURN_STATMENT;
@@ -179,70 +160,24 @@ ASTNode *parse_factor(Token *current_token, Lexer *lexer, Table_Manager *tm)
     else
     {
         printf("Erreur : facteur inattendu : %d\n", current_token->tokentype);
+        print_token(*current_token);
         exit(1);
     }
 }
 
-ASTNode *parse_term(Token *current_token, Lexer *lexer, Table_Manager *tm)
+ASTNode *parse_power(Token *current_token, Lexer *lexer, Function_Table *ft,
+                     Table_Manager *tm)
 {
-    ASTNode *left = parse_power(current_token, lexer, tm);
-
-    while (current_token->tokentype == MULTIPLY
-           || current_token->tokentype == DIVIDE)
-    {
-        TokenType op = current_token->tokentype;
-        *current_token = get_next_token(lexer);
-        ASTNode *right = parse_power(current_token, lexer, tm);
-
-        ASTNode *node = malloc(sizeof(ASTNode));
-
-        node->type = (op == MULTIPLY) ? NODE_MUL : NODE_DIV;
-        node->op.left = left;
-        node->op.right = right;
-
-        left = node;
-    }
-
-    return left;
-}
-
-ASTNode *parse_expr(Token *current_token, Lexer *lexer, Table_Manager *tm)
-{
-    ASTNode *left = parse_term(current_token, lexer, tm);
-
-    while (current_token->tokentype == PLUS
-           || current_token->tokentype == MINUS)
-    {
-        TokenType op = current_token->tokentype;
-        *current_token = get_next_token(lexer);
-        ASTNode *right = parse_term(current_token, lexer, tm);
-
-        ASTNode *node = malloc(sizeof(ASTNode));
-
-        node->type = (op == PLUS) ? NODE_ADD : NODE_SUB;
-        node->op.left = left;
-        node->op.right = right;
-
-        left = node;
-    }
-
-    return left;
-}
-
-ASTNode *parse_power(Token *current_token, Lexer *lexer, Table_Manager *tm)
-{
-    ASTNode *left = parse_factor(current_token, lexer, tm);
+    ASTNode *left = parse_factor(current_token, lexer, ft, tm);
 
     while (current_token->tokentype == POWER)
     {
         *current_token = get_next_token(lexer);
-        ASTNode *right = parse_power(
-            current_token, lexer, tm); // récursif pour associativité à droite
+        ASTNode *right =
+            parse_power(current_token, lexer, ft,
+                        tm); // récursif pour associativité à droite
 
-        ASTNode *node = malloc(sizeof(ASTNode));
-        node->type = NODE_POW;
-        node->op.left = left;
-        node->op.right = right;
+        ASTNode *node = create_op_node(NODE_POW, left, right);
 
         return node;
     }
@@ -250,96 +185,112 @@ ASTNode *parse_power(Token *current_token, Lexer *lexer, Table_Manager *tm)
     return left;
 }
 
-ASTList *parse_argument_list(Token *current_token, Lexer *lexer,
-                             Table_Manager *tm)
+ASTNode *parse_term(Token *current_token, Lexer *lexer, Function_Table *ft,
+                    Table_Manager *tm)
 {
-    ASTList *head = malloc(sizeof(ASTList));
-    head->statement = parse_expr(current_token, lexer, tm);
-    head->next = NULL;
+    ASTNode *left = parse_power(current_token, lexer, ft, tm);
 
-    ASTList *current = head;
-
-    while (current_token->tokentype == COMMA)
+    while (current_token->tokentype == MULTIPLY
+           || current_token->tokentype == DIVIDE)
     {
-        *current_token = get_next_token(lexer); // consomme la virgule
-        ASTList *next_arg = malloc(sizeof(ASTList));
-        next_arg->statement = parse_expr(current_token, lexer, tm);
-        next_arg->next = NULL;
-        current->next = next_arg;
-        current = next_arg;
+        TokenType op = current_token->tokentype;
+        NodeType nt = (op == MULTIPLY) ? NODE_MUL : NODE_DIV;
+        *current_token = get_next_token(lexer);
+        ASTNode *right = parse_power(current_token, lexer, ft, tm);
+
+        ASTNode *node = create_op_node(nt, left, right);
+
+        left = node;
     }
 
-    return head;
+    return left;
 }
 
-ASTNode *parse_function(Token *current_token, Lexer *lexer)
+ASTNode *parse_expr(Token *current_token, Lexer *lexer, Function_Table *ft,
+                    Table_Manager *tm)
+{
+    ASTNode *left = parse_term(current_token, lexer, ft, tm);
+
+    while (current_token->tokentype == PLUS
+           || current_token->tokentype == MINUS)
+    {
+        TokenType op = current_token->tokentype;
+        NodeType nt = (op == PLUS) ? NODE_ADD : NODE_SUB;
+        *current_token = get_next_token(lexer);
+        ASTNode *right = parse_term(current_token, lexer, ft, tm);
+
+        ASTNode *node = create_op_node(nt, left, right);
+
+        left = node;
+    }
+
+    return left;
+}
+
+ASTNode *parse_argument(Token *current_token, Lexer *lexer, Table_Manager *tm)
+{
+    ASTNode *node = NULL;
+    if (current_token->tokentype == VARTYPE)
+    {
+        VarSize vs = current_token->variable.type;
+        *current_token = get_next_token(lexer);
+
+        if (current_token->tokentype == IDENTIFIER)
+        {
+            ASTNode *assign = malloc(sizeof(ASTNode));
+            assign->type = NODE_VARIABLE;
+
+            assign->var.offset = -tm->offset;
+            assign->var.op.left = malloc(sizeof(ASTNode));
+            assign->var.op.left->type = NODE_IDENTIFIER;
+            assign->var.op.left->identifier = current_token->identifier;
+            assign->var.type = vs; // to change
+
+            assign->var.op.right = NULL;
+
+            set_variable(tm, assign->op.left->identifier, -tm->offset, vs);
+
+            tm->offset += sizeof(long);
+
+            node = assign;
+        }
+    }
+
+    return node;
+}
+
+ASTNode *parse_function(Token *current_token, Lexer *lexer, Function_Table *ft)
 {
     ASTNode *res = NULL;
     if (current_token->tokentype == FUNCTION_DECL)
     {
-        ASTNode *func = malloc(sizeof(ASTNode));
-        func->type = NODE_FUNCTION_DECL;
+        // on sattend a avoir les tokens dans le bon ordre
+        *current_token = get_next_token(lexer);
 
-        func->function.body = NULL;
-        func->function.tm = malloc(sizeof(Table_Manager));
-        func->function.tm->offset = sizeof(long);
-        func->function.tm->variable_count = 0;
-        for (long unsigned int i = 0; i < ARGUMENTS_REG_COUNT; i++)
-        {
-            func->function.used[i] = false;
-        }
+        char *fname = current_token->function.name;
+
+        ASTNode *func = create_func_node(fname);
 
         ASTList **current = &(func->function.body);
         ASTList **args_current = &(func->function.args);
 
-        // on sattend a avoir les tokens dans le bon ordre
         *current_token = get_next_token(lexer);
 
-        func->function.name = malloc(sizeof(struct ASTNode));
-        func->function.name->type = NODE_IDENTIFIER;
-        func->function.name->identifier = current_token->function.name;
-        func->function.args_size = 0;
-
-
-        *current_token = get_next_token(lexer);
-            print_token(*current_token);
-
-        printf("tokens fun\n");
         while (current_token->tokentype != RPARENTHESIS)
         {
-            print_token(*current_token);
             *current_token = get_next_token(lexer);
 
-            if (current_token->tokentype == VARTYPE)
+            ASTNode *var =
+                parse_argument(current_token, lexer, func->function.tm);
+
+            if (var)
             {
-                VarSize vs = current_token->variable.type;
-                *current_token = get_next_token(lexer);
+                ASTList *new = malloc(sizeof(ASTList));
+                new->statement = var;
+                new->next = NULL;
 
-                if (current_token->tokentype == IDENTIFIER)
-                {
-                    ASTNode *assign = malloc(sizeof(ASTNode));
-                    assign->type = NODE_VARIABLE;
-
-                    assign->var.offset = -func->function.tm->offset;
-                    assign->var.op.left = malloc(sizeof(ASTNode));
-                    assign->var.op.left->type = NODE_IDENTIFIER;
-                    assign->var.op.left->identifier = current_token->identifier;
-                    assign->var.type = vs; // to change
-
-                    assign->var.op.right = NULL;
-
-                    ASTList *new = malloc(sizeof(ASTList));
-                    new->statement = assign;
-                    new->next = NULL;
-
-                    *args_current = new;
-                    args_current = &(new->next);
-
-                    set_variable(func->function.tm, assign->op.left->identifier,
-                                 func->function.tm->offset, INT64);
-
-                    func->function.tm->offset += sizeof(long);
-                }
+                *args_current = new;
+                args_current = &(new->next);
             }
         }
 
@@ -356,7 +307,6 @@ ASTNode *parse_function(Token *current_token, Lexer *lexer)
 
                 if (current_token->tokentype == VARTYPE)
                 {
-                    printf("        rettt succ found\n");
                     print_vartype(current_token->variable.type, 0);
                     func->function.rettype = current_token->variable.type;
                 }
@@ -372,20 +322,20 @@ ASTNode *parse_function(Token *current_token, Lexer *lexer)
 
         *current_token = get_next_token(lexer);
 
-        if (strcmp(func->function.name->identifier, "main") == 0)
+        if (strcmp(func->function.name, "main") == 0)
         {
             has_main = true;
         }
 
+        set_function(ft, fname);
+
         while (current_token->tokentype != RBRACE)
         {
-            ASTNode *stmt = parse_expr(current_token, lexer, func->function.tm);
+            ASTNode *stmt =
+                parse_expr(current_token, lexer, ft, func->function.tm);
 
             if (stmt->type == NODE_VARIABLE)
             {
-                // printf("ident offset : %d\n", func->function.tm->offset);
-
-                // func->function.tm->offset += sizeof(long);
                 func->function.tm->offset += sizeofvartype(stmt->var.type);
             }
 
@@ -421,13 +371,14 @@ ASTNode *parse_program(Token *current_token, Lexer *lexer)
     ASTNode *program = malloc(sizeof(ASTNode));
     program->type = NODE_PROGRAM;
     program->program.list = NULL;
+    program->program.ft = malloc(sizeof(Function_Table));
 
     ASTList **current = &(program->program.list);
 
     while (current_token->tokentype != TOKEN_EOF)
     {
-        // ASTNode *stmt = parse_expr(current_token, lexer);
-        ASTNode *stmt = parse_function(current_token, lexer);
+        ASTNode *stmt =
+            parse_function(current_token, lexer, program->program.ft);
 
         ASTList *new_node = malloc(sizeof(ASTList));
         new_node->statement = stmt;

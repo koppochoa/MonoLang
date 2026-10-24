@@ -67,6 +67,19 @@
               "focus": false,
               "end": 1792527387192
             }
+          },
+          {
+            "key": 1792698939323,
+            "children": [],
+            "todo": {
+              "content": "function name into char*, not ASTNode",
+              "id": 1792698939323,
+              "level": "default",
+              "done": true,
+              "start": 1792698939323,
+              "focus": false,
+              "end": 1792749848567
+            }
           }
         ],
         "todo": {
@@ -89,8 +102,10 @@
               "content": "Type",
               "id": 1792174480416,
               "level": "default",
-              "done": false,
-              "start": 1792174480416
+              "done": true,
+              "start": 1792174480416,
+              "focus": false,
+              "end": 1792698956564
             }
           },
           {
@@ -100,10 +115,10 @@
               "content": "value",
               "id": 1792174483525,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1792174483525,
               "focus": false,
-              "end": 1792527345141
+              "end": 1792698957107
             }
           }
         ],
@@ -111,8 +126,10 @@
           "content": "Variables",
           "id": 1792174476378,
           "level": "default",
-          "done": false,
-          "start": 1792174476378
+          "done": true,
+          "start": 1792174476378,
+          "focus": false,
+          "end": 1792698958130
         }
       },
       {
@@ -148,8 +165,10 @@
               "content": "No Main",
               "id": 1792565294321,
               "level": "default",
-              "done": false,
-              "start": 1792565294321
+              "done": true,
+              "start": 1792565294321,
+              "focus": false,
+              "end": 1792698963646
             }
           },
           {
@@ -190,8 +209,10 @@
           "content": "Comments",
           "id": 1792566343029,
           "level": "default",
-          "done": false,
-          "start": 1792566343029
+          "done": true,
+          "start": 1792566343029,
+          "focus": false,
+          "end": 1792698967233
         }
       },
       {
@@ -212,7 +233,7 @@
           "content": "conditions",
           "id": 1792566360848,
           "level": "default",
-          "done": true,
+          "done": false,
           "start": 1792566360848,
           "focus": false,
           "end": 1792567082499
@@ -247,6 +268,6 @@
     "showEndTime": false,
     "simpleMode": false,
     "lang": "en",
-    "version": "1792567082537"
+    "version": "1792749848608"
   }
 }

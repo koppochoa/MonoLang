@@ -17,7 +17,7 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
     }
 
     case NODE_FUNCTION_DECL: {
-        emit_label(out, node->function.name->identifier);
+        emit_label(out, node->function.name);
 
         Register rbp = { .reg = RBP, .size = INT64 };
         Register rsp = { .reg = RSP, .size = INT64 };
@@ -49,6 +49,7 @@ void generate_code(FILE *out, ASTNode *node, Table_Manager *tm)
 
         break;
     }
+
     case NODE_VARIABLE: {
         if (!tm)
         {
@@ -185,10 +186,23 @@ Register generate_expr(FILE *out, ASTNode *node, VarSize type)
 
         return r2;
     }
+    case NODE_FUNCTION_CALL: {
+        fprintf(out, "#FUNC CALL\n");
+        struct Operand op = { .type = OPERAND_LABEL,
+                              .value = { .label = node->function_call.name } };
 
+        ASTList *current = node->function_call.args;
+        while (current)
+        {
+            generate_params(out, current->statement, node->function_call.used);
+            current = current->next;
+        }
+
+        fprintf(out, "   call %s\n", node->function_call.name);
+
+        break;
+    }
     case NODE_VARIABLE_CALL: {
-        Register reg = { .reg = RBP };
-
         const struct Operand src = {
             .type = OPERAND_MEMORY,
             .value = { .memory = { .offset = node->varcall.offset,
@@ -212,6 +226,42 @@ Register generate_expr(FILE *out, ASTNode *node, VarSize type)
 
     Register r = { r.reg = REG_ERR };
     return r;
+}
+
+void generate_params(FILE *out, ASTNode *node, bool *used)
+{
+    const struct Operand vout = {
+        .type = OPERAND_MEMORY,
+        .value = { .memory = { .offset = node->var.offset,
+                               .reg = { .reg = RBP, .size = INT64 } } }
+    };
+
+    // if (*varcount >= ARGUMENTS_REG_COUNT)
+    // {
+    //     const struct Operand vin = {
+    //         .type = OPERAND_MEMORY,
+    //         .value = { .memory = { .offset = *varoffset, .reg = RBP } }
+    //     };
+
+    //     Register tmpr = find_free_reg();
+    //     tmpr.size = node->var.type;
+
+    //     emit_2(out, MOV, node->var.type, vin, REG(tmpr));
+    //     emit_2(out, MOV, node->var.type, REG(tmpr), vout);
+
+    //     free_reg(tmpr);
+
+    //     (*varoffset) += 8;
+    //     return;
+    // }
+
+    Register reg = find_free_reg_from(used);
+    reg.size = node->var.type;
+
+    // Register val = generate_expr(out, node, );
+
+    // emit_2(out, MOV, node->var.type, , REG(reg));
+
 }
 
 void generate_args(FILE *out, ASTNode *node, bool *used,

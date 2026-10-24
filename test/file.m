@@ -1,11 +1,13 @@
 
+fn add(int32 a, int32 b): int32{
+    return a+b;
+}
+
 fn main(int32 x): int32{
 
-    #void
-    #void* -> 64
-    int32 a = 42;
+    int32 a = 52;
     int32 b = 10;
-    #int8 c = a + b;
+    int32 c = add(5, 10);
 
-    return b+a;
+    return c;
 }

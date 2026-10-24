@@ -20,6 +20,9 @@ void emit_mem(FILE *out, Register reg, int offset)
     }
 }
 
+
+
+
 void emit_register(FILE *out, const Register reg)
 {
     fprintf(out, "%s", register_names[reg.size][reg.reg]);
@@ -37,6 +40,9 @@ void emit_operand(FILE *out, const struct Operand op)
         break;
     case OPERAND_MEMORY:
         emit_mem(out, op.value.memory.reg, op.value.memory.offset);
+        break;
+    case OPERAND_LABEL:
+        // emit_label();
         break;
     default:
         break;
@@ -87,24 +93,18 @@ void emit_label(FILE *out, const char *label)
 void totype(char *buff, int i, VarSize type)
 {
     switch (type)
-
     {
     case INT8:
         buff[i] = 'b';
         break;
     case INT16:
         buff[i] = 'w';
-
         break;
-
     case INT32:
         buff[i] = 'l';
-
         break;
-
     case INT64:
         buff[i] = 'q';
-
         break;
     }
 }
@@ -159,7 +159,20 @@ char *push(VarSize type)
     return mnemonic("push", type);
 }
 
-char *leave(VarSize type)
+char *call()
+{
+    size_t len = strlen("call");
+    char *res = malloc(len + 1); // suffixe + '\0'
+    if (!res)
+        return NULL;
+
+    memcpy(res, "call", len);
+    res[len] = '\0';
+
+    return res;
+}
+
+char *leave()
 {
     size_t len = strlen("leave");
     char *res = malloc(len + 1); // suffixe + '\0'
@@ -169,11 +182,10 @@ char *leave(VarSize type)
     memcpy(res, "leave", len);
     res[len] = '\0';
 
-
     return res;
 }
 
-char *ret(VarSize type)
+char *ret()
 {
     size_t len = strlen("ret");
     char *res = malloc(len + 1); // suffixe + '\0'
@@ -183,11 +195,10 @@ char *ret(VarSize type)
     memcpy(res, "ret", len);
     res[len] = '\0';
 
-
     return res;
 }
 
-char *syscall(VarSize type)
+char *syscall()
 {
     size_t len = strlen("syscall");
     char *res = malloc(len + 1); // suffixe + '\0'
@@ -196,7 +207,6 @@ char *syscall(VarSize type)
 
     memcpy(res, "syscall", len);
     res[len] = '\0';
-
 
     return res;
 }
@@ -225,5 +235,7 @@ char *get_mnem(Mnem mn, VarSize type)
         return leave(type);
     case RET:
         return ret(type);
+    case CALL:
+        return call(type);
     }
 }

@@ -8,7 +8,8 @@ typedef enum
 {
     OPERAND_IMMEDIATE,
     OPERAND_REGISTER,
-    OPERAND_MEMORY
+    OPERAND_MEMORY,
+    OPERAND_LABEL
 } OperandType;
 
 struct Operand
@@ -16,6 +17,7 @@ struct Operand
     OperandType type;
     union
     {
+        char* label;
         const Register reg;
         long immediate;
         struct
@@ -38,6 +40,7 @@ typedef enum
     LEAVE,
     RET,
 
+    CALL,
     PUSH,
     SYSCALL
 } Mnem;
@@ -61,15 +64,16 @@ void emit_label(FILE *out, const char *label);
 char *get_mnem(Mnem mn, VarSize type);
 char *mnemonic(const char *name, VarSize type);
 
-char *syscall(VarSize type);
+char *syscall();
+
 char *mov(VarSize type);
 char *add(VarSize type);
 char *sub(VarSize type);
 char *mul(VarSize type);
 char *divi(VarSize type);
 char *neg(VarSize type);
-
 char *push(VarSize type);
 
-char *leave(VarSize type);
-char *ret(VarSize type);
+char *call();
+char *leave();
+char *ret();
